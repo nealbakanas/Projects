@@ -1,0 +1,11 @@
+# Godot 4
+.godot/
+/android/
+*.translation
+
+# Export output
+/build/
+
+# OS / editor
+.DS_Store
+*.tmp

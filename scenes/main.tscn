@@ -1,0 +1,24 @@
+[gd_scene load_steps=2 format=3 uid="uid://b3mathblstr01"]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+
+[node name="Title" type="Label" parent="."]
+offset_top = 56.0
+offset_right = 320.0
+offset_bottom = 80.0
+theme_override_colors/font_color = Color(1, 0.82, 0.25, 1)
+theme_override_font_sizes/font_size = 16
+text = "MATH BLASTER"
+horizontal_alignment = 1
+
+[node name="Problem" type="Label" parent="."]
+offset_top = 88.0
+offset_right = 320.0
+offset_bottom = 104.0
+theme_override_colors/font_color = Color(0.3, 0.79, 0.94, 1)
+text = "8 + 5 = ?"
+horizontal_alignment = 1
+
