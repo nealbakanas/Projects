@@ -42,6 +42,15 @@ jobs:
       - name: Import project
         run: ~/godot/godot --headless --import
 
+      - name: Unit tests
+        run: |
+          set -o pipefail
+          ~/godot/godot --headless --script res://tests/run_tests.gd 2>&1 | tee /tmp/tests.log
+          if grep -qE "SCRIPT ERROR|^ERROR" /tmp/tests.log; then
+            echo "::error::Script errors while running tests"
+            exit 1
+          fi
+
       - name: Smoke test (boot main scene)
         run: |
           ~/godot/godot --headless --quit-after 120 2>&1 | tee /tmp/boot.log
