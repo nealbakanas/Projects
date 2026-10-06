@@ -6,19 +6,75 @@
 script = ExtResource("1_main")
 
 [node name="Title" type="Label" parent="."]
-offset_top = 56.0
+offset_top = 28.0
 offset_right = 320.0
-offset_bottom = 80.0
+offset_bottom = 52.0
 theme_override_colors/font_color = Color(1, 0.82, 0.25, 1)
 theme_override_font_sizes/font_size = 16
 text = "MATH BLASTER"
 horizontal_alignment = 1
 
-[node name="Problem" type="Label" parent="."]
-offset_top = 88.0
-offset_right = 320.0
-offset_bottom = 104.0
+[node name="Tier" type="Label" parent="."]
+offset_left = 100.0
+offset_top = 70.0
+offset_right = 220.0
+offset_bottom = 90.0
 theme_override_colors/font_color = Color(0.3, 0.79, 0.94, 1)
-text = "8 + 5 = ?"
+theme_override_font_sizes/font_size = 16
+text = "Tier 1"
 horizontal_alignment = 1
 
+[node name="TierDown" type="Button" parent="."]
+offset_left = 76.0
+offset_top = 68.0
+offset_right = 100.0
+offset_bottom = 90.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 16
+text = "<"
+
+[node name="TierUp" type="Button" parent="."]
+offset_left = 220.0
+offset_top = 68.0
+offset_right = 244.0
+offset_bottom = 90.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 16
+text = ">"
+
+[node name="Mode" type="Label" parent="."]
+offset_left = 76.0
+offset_top = 98.0
+offset_right = 244.0
+offset_bottom = 118.0
+theme_override_colors/font_color = Color(0.3, 0.79, 0.94, 1)
+theme_override_font_sizes/font_size = 16
+text = "Type the answer"
+horizontal_alignment = 1
+
+[node name="ModePrev" type="Button" parent="."]
+offset_left = 52.0
+offset_top = 96.0
+offset_right = 76.0
+offset_bottom = 118.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 16
+text = "<"
+
+[node name="ModeNext" type="Button" parent="."]
+offset_left = 244.0
+offset_top = 96.0
+offset_right = 268.0
+offset_bottom = 118.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 16
+text = ">"
+
+[node name="Start" type="Button" parent="."]
+offset_left = 110.0
+offset_top = 134.0
+offset_right = 210.0
+offset_bottom = 158.0
+focus_mode = 0
+theme_override_font_sizes/font_size = 16
+text = "START"

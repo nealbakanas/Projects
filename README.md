@@ -16,6 +16,20 @@ Open `project.godot` in Godot and press F5, or from the command line:
 godot --path .
 ```
 
+## How to play (prototype)
+
+Pick a content tier and an input mode on the title screen (arrow keys + Enter, or click).
+Saucers descend carrying problems; answer them before they reach your ship. Five breaches
+and the ship goes down. Consecutive correct answers build a score multiplier.
+
+- **Type the answer:** type the number (`-`, `/` and `.` work too) and press Enter. The shot
+  auto-targets whichever saucer it solves.
+- **Shoot the answer:** click/tap one of four answers, or press 1-4. It fires at the
+  highlighted saucer, the one closest to your ship.
+
+A wrong answer breaks your combo and pushes the target saucer forward. Orange saucers take
+two hits and show a new problem after the first.
+
 ## Tests
 
 Unit tests live in `tests/` and run headless with a small built-in runner (no addons):
@@ -28,6 +42,15 @@ godot --headless --script res://tests/run_tests.gd
 The runner executes every `test_*` method in `tests/test_*.gd` and exits non-zero on failure.
 Problem-generator answers are checked against an independent rational-number expression
 evaluator (`tests/expression_oracle.gd`), not against the generator's own arithmetic.
+
+## Code layout
+
+- `scripts/problems/`: `ProblemGenerator`, `Problem`, and `Distractors` (wrong answers for
+  shoot mode). Pure logic.
+- `scripts/combat/`: `Encounter` (all combat rules, pure logic, driven by `step(delta)` and
+  `submit(answer)`), `Weapon`, and `combat.gd` (the scene that draws an encounter).
+- `scripts/input/`: `AnswerInput` and its two strategies, `TypedAnswerInput` and
+  `ChoiceAnswerInput`. Combat only listens for `answer_submitted`, so modes are swappable.
 
 ## Problem generator
 
