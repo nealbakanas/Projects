@@ -87,8 +87,14 @@ python3 -m http.server -d build/web 8000   # then open http://localhost:8000
 - Stretch mode `viewport` with `integer` scaling
 - Nearest texture filtering, pixel snapping, and no font antialiasing
 
+## Play online
+
+Every push to `math-blaster` deploys the web build to GitHub Pages:
+https://nealbakanas.github.io/Projects/
+
 ## CI
 
 `.github/workflows/build.yml` runs on every push and PR. It imports the project, runs the unit
 tests, boots the main scene headless and fails on any script error, exports the web build, and uploads it as
-the `math-blaster-web` artifact.
+the `math-blaster-web` artifact. Pushes to `math-blaster` also deploy that build to GitHub
+Pages (one-time setup: repo Settings → Pages → Source: GitHub Actions).
