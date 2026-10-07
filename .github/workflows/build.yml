@@ -72,3 +72,31 @@ jobs:
           name: math-blaster-web
           path: build/web
           if-no-files-found: error
+
+  deploy:
+    name: Deploy to GitHub Pages
+    if: github.event_name == 'push' && github.ref == 'refs/heads/math-blaster'
+    needs: web
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: true
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: math-blaster-web
+          path: build/web
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
