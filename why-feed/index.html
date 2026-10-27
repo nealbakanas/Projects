@@ -1,0 +1,1009 @@
+<title>The Why Feed</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: a full-height snap feed of one-question cards; each card is a "why ladder" that climbs from toddler answer to real mechanism. */
+:root {
+  --bg: #EDF0F5;
+  --surface: #FFFFFF;
+  --ink: #131B27;
+  --muted: #586376;
+  --line: #D5DBE4;
+  --accent: #2343CF;
+  --accent-ink: #FFFFFF;
+  --c-physics: #2B63D9;
+  --c-chem: #C9501A;
+  --c-bio: #2A8445;
+  --c-body: #C2386A;
+  --c-earth: #12807F;
+  --c-space: #6547CC;
+  --c-math: #A06F00;
+  --c-tech: #4B5D73;
+  --f-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0C1118; --surface: #141B25; --ink: #E5EAF1; --muted: #93A0B3; --line: #243042;
+    --accent: #8EA2FF; --accent-ink: #0C1118;
+    --c-physics: #7FA6FF; --c-chem: #FF9B66; --c-bio: #6CCD8A; --c-body: #FF8DB1; --c-earth: #5ACFCF;
+    --c-space: #B39EFF; --c-math: #EEC04A; --c-tech: #A7B6CA;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0C1118; --surface: #141B25; --ink: #E5EAF1; --muted: #93A0B3; --line: #243042;
+  --accent: #8EA2FF; --accent-ink: #0C1118;
+  --c-physics: #7FA6FF; --c-chem: #FF9B66; --c-bio: #6CCD8A; --c-body: #FF8DB1; --c-earth: #5ACFCF;
+  --c-space: #B39EFF; --c-math: #EEC04A; --c-tech: #A7B6CA;
+  color-scheme: dark;
+}
+
+html { height: 100%; box-sizing: border-box; }
+[hidden] { display: none !important; }
+*, *::before, *::after { box-sizing: inherit; }
+body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 16px;
+  line-height: 1.55;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+/* Header */
+.top {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding-block: 12px 8px; flex-wrap: wrap;
+  max-width: 680px; width: 100%; margin-inline: auto;
+}
+.brand { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.brand h1 {
+  font-family: var(--f-display); font-weight: 800; font-size: 1.35rem; letter-spacing: -0.02em;
+  margin: 0; line-height: 1;
+}
+.brand h1 span { color: var(--accent); }
+.today { font-family: var(--f-mono); font-size: 0.7rem; color: var(--muted); letter-spacing: 0.04em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tabs { display: flex; gap: 2px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+.tabs button {
+  border: 0; background: transparent; padding: 5px 12px; border-radius: 999px;
+  font-size: 0.85rem; font-weight: 700; color: var(--muted);
+}
+.tabs button[aria-current="page"] { background: var(--ink); color: var(--bg); }
+.tabs .count { font-family: var(--f-mono); font-weight: 500; font-size: 0.72rem; opacity: 0.75; margin-left: 3px; }
+
+.view { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+
+/* Filters */
+.filters {
+  display: flex; gap: 6px; overflow-x: auto; padding-block: 4px 10px; scrollbar-width: none;
+  max-width: 680px; width: 100%; margin-inline: auto;
+}
+.filters::-webkit-scrollbar { display: none; }
+.filters button {
+  flex: none; border: 1px solid var(--line); background: var(--surface); border-radius: 999px;
+  padding: 4px 11px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px; color: var(--muted);
+}
+.filters button i { width: 8px; height: 8px; border-radius: 50%; background: var(--cat, var(--ink)); }
+.filters button[aria-pressed="true"] { border-color: var(--cat, var(--ink)); color: var(--ink); font-weight: 700; }
+
+/* Feed */
+.feed {
+  flex: 1; min-height: 0; overflow-y: auto; scroll-snap-type: y mandatory;
+  overscroll-behavior: contain; scrollbar-width: none;
+}
+.feed::-webkit-scrollbar { display: none; }
+.card {
+  height: 100%; scroll-snap-align: start; scroll-snap-stop: always;
+  padding-block: 0 22px; display: flex; position: relative;
+}
+.card-inner {
+  --tint: color-mix(in srgb, var(--cat) 8%, var(--surface));
+  width: 100%; max-width: 680px; margin-inline: auto; height: 100%;
+  background: var(--tint); border: 1px solid color-mix(in srgb, var(--cat) 22%, var(--line));
+  border-radius: 22px; padding: 20px 20px 18px;
+  overflow-y: auto; display: flex; flex-direction: column; gap: 16px;
+  position: relative;
+}
+.card-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.chip {
+  font-family: var(--f-mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--cat); display: inline-flex; align-items: center; gap: 7px;
+}
+.chip i { width: 9px; height: 9px; border-radius: 50%; background: var(--cat); }
+.save {
+  border: 1px solid var(--line); background: var(--surface); border-radius: 999px;
+  display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px 5px 9px; font-size: 0.8rem; color: var(--muted);
+}
+.save svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
+.save[aria-pressed="true"] { color: var(--cat); border-color: var(--cat); }
+.save[aria-pressed="true"] svg { fill: currentColor; }
+.q {
+  font-family: var(--f-display); font-weight: 800; letter-spacing: -0.025em;
+  font-size: clamp(1.65rem, 6.2vw, 2.45rem); line-height: 1.04; margin: 0; text-wrap: balance;
+}
+.ladder { list-style: none; margin: 0; padding: 0 0 0 22px; display: grid; gap: 16px; position: relative; }
+.ladder::before {
+  content: ""; position: absolute; left: 5px; top: 8px; bottom: 8px; width: 2px;
+  background: color-mix(in srgb, var(--cat) 35%, transparent); border-radius: 2px;
+}
+.rung { position: relative; min-width: 0; }
+.rung::before {
+  content: ""; position: absolute; left: -22px; top: 5px; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--tint); border: 2px solid var(--cat);
+}
+.rung:first-child::before { background: var(--cat); }
+.rung-label {
+  display: block; font-family: var(--f-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 4px;
+}
+.rung p { margin: 0 0 0.6em; max-width: 62ch; }
+.rung p:last-child { margin-bottom: 0; }
+.kid { font-size: 1.12rem; font-weight: 700; line-height: 1.4; }
+.fact {
+  margin: 0; font-size: 0.92rem; color: var(--muted); border-top: 1px dashed color-mix(in srgb, var(--cat) 40%, var(--line));
+  padding-top: 12px;
+}
+.fact b { color: var(--ink); }
+.next {
+  margin-top: auto; text-align: left; border: 1.5px solid var(--cat); background: var(--surface);
+  border-radius: 14px; padding: 11px 14px; display: flex; align-items: center; gap: 12px;
+}
+.next small { display: block; font-family: var(--f-mono); font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--cat); }
+.next span { font-weight: 700; line-height: 1.3; }
+.next .arrow { margin-left: auto; font-size: 1.2rem; color: var(--cat); flex: none; }
+.hint {
+  position: absolute; left: 50%; bottom: 3px; transform: translateX(-50%);
+  font-family: var(--f-mono); font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted); pointer-events: none; animation: nudge 1.8s ease-in-out infinite;
+}
+@keyframes nudge { 50% { transform: translate(-50%, -4px); } }
+
+.interstitial .card-inner { justify-content: center; align-items: flex-start; }
+.interstitial h2 { font-family: var(--f-display); font-weight: 800; font-size: 1.9rem; margin: 0; letter-spacing: -0.02em; line-height: 1.1; }
+.interstitial p { margin: 0; color: var(--muted); max-width: 46ch; }
+
+/* Lists (saved, books) */
+.list { flex: 1; min-height: 0; overflow-y: auto; padding-block: 6px 24px; }
+.list-inner { max-width: 680px; margin-inline: auto; display: grid; gap: 22px; }
+.list h2 { font-family: var(--f-display); font-weight: 800; font-size: 1.6rem; letter-spacing: -0.02em; margin: 0; line-height: 1.1; }
+.list .lede { margin: 6px 0 0; color: var(--muted); max-width: 60ch; }
+.saved-item {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px;
+}
+.saved-item summary { cursor: pointer; display: flex; gap: 10px; align-items: baseline; list-style: none; }
+.saved-item summary::-webkit-details-marker { display: none; }
+.saved-item summary .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--cat); flex: none; transform: translateY(-1px); }
+.saved-item summary strong { font-family: var(--f-display); font-weight: 600; font-size: 1.1rem; line-height: 1.25; }
+.saved-item .body { padding-top: 12px; display: grid; gap: 10px; }
+.saved-item .body p { margin: 0; max-width: 62ch; }
+.saved-item .remove { justify-self: start; border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 4px 12px; font-size: 0.8rem; color: var(--muted); }
+.empty { background: var(--surface); border: 1px dashed var(--line); border-radius: 16px; padding: 22px; color: var(--muted); }
+
+.progress { display: grid; gap: 6px; }
+.progress .bar { height: 8px; background: var(--line); border-radius: 99px; overflow: hidden; }
+.progress .bar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; transition: width .3s; }
+.progress span { font-family: var(--f-mono); font-size: 0.72rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.stage { display: grid; gap: 10px; }
+.stage h3 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 1.2rem; }
+.stage > p { margin: -4px 0 2px; color: var(--muted); font-size: 0.92rem; max-width: 62ch; }
+.book {
+  display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; cursor: pointer;
+}
+.book input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--accent); cursor: pointer; }
+.book .info { min-width: 0; }
+.book .title { font-weight: 700; }
+.book .author { color: var(--muted); }
+.book .why { margin: 3px 0 0; font-size: 0.92rem; color: var(--muted); }
+.book .badge {
+  display: inline-block; font-family: var(--f-mono); font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em;
+  background: var(--accent); color: var(--accent-ink); border-radius: 4px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px;
+}
+.book.done .title { text-decoration: line-through; text-decoration-color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .hint { animation: none; }
+  .feed { scroll-behavior: auto; }
+}
+</style>
+
+<header class="top">
+  <div class="brand">
+    <h1>The Why <span>Feed</span></h1>
+    <span class="today" id="today">0 today</span>
+  </div>
+  <nav class="tabs" aria-label="Views">
+    <button id="tab-feed" data-view="feed">Feed</button>
+    <button id="tab-saved" data-view="saved">Saved<span class="count" id="savedCount"></span></button>
+    <button id="tab-books" data-view="books">Books</button>
+  </nav>
+</header>
+
+<section class="view" id="view-feed">
+  <div class="filters" id="filters" role="toolbar" aria-label="Filter by subject"></div>
+  <div class="feed" id="feed" tabindex="-1"></div>
+</section>
+
+<section class="view" id="view-saved" hidden>
+  <div class="list"><div class="list-inner" id="savedList"></div></div>
+</section>
+
+<section class="view" id="view-books" hidden>
+  <div class="list"><div class="list-inner" id="bookList"></div></div>
+</section>
+
+<script>
+const CATS = {
+  physics: "Physics", chem: "Chemistry", bio: "Living things", body: "Your body",
+  earth: "Earth & weather", space: "Space", math: "Math", tech: "How things work"
+};
+
+// Each card: q (question), kid (rung 1), how (rung 2, paragraphs), try (rung 3, optional), fact (optional), next (follow-up card id).
+const CARDS = [
+  { id: "microwave", cat: "tech", q: "How does a microwave heat food?",
+    kid: "It shakes the water in your food back and forth super fast, and all that wiggling makes heat.",
+    how: ["Microwaves are radio waves about 12 cm long. Their electric field flips direction 2.45 billion times a second.",
+          "Water molecules are lopsided: one end is slightly negative and the other slightly positive. So they keep trying to spin around and line up with the flipping field. As they twist, they jostle their neighbours, and that jostling is heat. Dry things like an empty plate barely warm up.",
+          "The waves bounce around the metal box and form a pattern of hot and cold spots. That's why there's a turntable."],
+    try: "Take the turntable out and microwave a plate of grated cheese for about 20 seconds. Melted spots appear about 6 cm apart, which is half the wavelength.",
+    fact: "Microwaves don't cook from the inside out. They reach only a centimetre or two in. Heat carries the rest of the way in, just like in an oven.",
+    next: "light" },
+  { id: "light", cat: "physics", q: "What actually is light?",
+    kid: "Light is a kind of energy that zooms out from things like the sun and lamps. When it bounces into your eyes, you see.",
+    how: ["Light is a wave of electric and magnetic fields that keeps itself going through empty space at about 300,000 km per second.",
+          "Visible light is a tiny slice of a much bigger family. Radio waves, microwaves, infrared, ultraviolet, X-rays and gamma rays are all the same stuff with different wavelengths. Red light's waves are about 700 nanometres long and violet's about 400.",
+          "Light also arrives in tiny packets called photons. Whether it acts like a wave or like particles depends on how you measure it. That's one of the deep strangenesses of quantum physics."],
+    fact: "Sunlight is about 8 minutes and 20 seconds old when it reaches you.",
+    next: "sky" },
+  { id: "bulb", cat: "tech", q: "How does a light bulb work?",
+    kid: "Electricity squeezes through a teeny wire that gets SO hot it glows, like a stove top turning orange.",
+    how: ["An old-style bulb pushes current through a very thin tungsten filament. Electrons crash into the metal's atoms and heat it to about 2,500 °C. Anything that hot glows white.",
+          "The glass is filled with an unreactive gas instead of air. With oxygen inside, the filament would burn up in a flash. Over 90% of the energy still comes out as heat, not light.",
+          "An LED works differently. Electrons drop across a junction between two kinds of semiconductor, and each drop releases a photon of one particular colour. White LEDs are usually blue LEDs coated with a yellow phosphor."],
+    fact: "A fire station in Livermore, California, has had the same bulb burning since 1901.",
+    next: "glow" },
+  { id: "glow", cat: "physics", q: "Why do hot things glow?",
+    kid: "Everything gives off invisible light. When things get really hot, the light gets strong enough for us to see.",
+    how: ["Atoms are always jiggling, and jiggling electric charges give off light. Cool things give off infrared, which we can't see. You glow in infrared right now, which is how thermal cameras see you in the dark.",
+          "As something heats up, it gives off more light, and the light shifts to shorter wavelengths. At about 525 °C there's enough red to see in the dark. Hotter still, it goes orange, then yellow, then white.",
+          "The same rule tells astronomers how hot stars are. Red stars are coolish, around 3,000 °C. Blue-white stars run above 10,000 °C."],
+    next: "starcolor" },
+  { id: "starcolor", cat: "space", q: "Why are stars different colours?",
+    kid: "A star's colour shows how hot it is. Red stars are cooler, and blue stars are the hottest.",
+    how: ["Stars are glowing balls of hot gas, so they follow the same rule as a stove element: hotter means bluer. Our sun's surface is about 5,500 °C and looks white from space. It looks yellow through our air.",
+          "A star's temperature depends mostly on its mass. Heavy stars squeeze their cores harder, burn fuel furiously and shine blue-hot. They also burn out in just millions of years. Small red stars sip their fuel and can last trillions of years."],
+    try: "On a clear night, find Orion. Betelgeuse at the top left is orange-red. Rigel at the bottom right is blue-white.",
+    next: "sun" },
+  { id: "sky", cat: "physics", q: "Why is the sky blue?",
+    kid: "Sunlight has every colour in it. The air bounces blue light all over the sky, so blue comes at you from every direction.",
+    how: ["Sunlight is a mix of all colours. When it hits the gas molecules in air, some gets scattered off in random directions. Shorter wavelengths scatter far more: blue light scatters about five times more than red.",
+          "So when you look at any patch of sky away from the sun, you're seeing sunlight that has been bounced toward you, and that light is mostly blue.",
+          "Violet scatters even more, so why isn't the sky violet? The sun gives off less violet, some is absorbed high up, and our eyes are much less sensitive to it."],
+    fact: "On Mars the sky is butterscotch by day and the sunsets are blue, because fine dust scatters light differently.",
+    next: "sunset" },
+  { id: "sunset", cat: "physics", q: "Why are sunsets orange and red?",
+    kid: "When the sun is low, its light has to travel through lots more air. The blue gets bounced away, and the oranges and reds make it to you.",
+    how: ["At noon, sunlight crosses a fairly thin layer of air to reach you. At sunset it skims sideways through about 40 times as much air.",
+          "Along that long path, most of the blue and green gets scattered out sideways. Those are the colours that make someone else's sky blue. What's left travelling straight toward you is the red and orange end.",
+          "Dust, smoke and volcanic ash add extra scattering, which is why some sunsets are spectacular."],
+    next: "rainbow" },
+  { id: "rainbow", cat: "physics", q: "How do rainbows happen?",
+    kid: "Sunlight goes into raindrops, bends, bounces, and splits into all its colours, and each drop sends one colour to your eye.",
+    how: ["Light slows down and bends when it enters a water drop, reflects off the back, and bends again on the way out. Each colour bends a slightly different amount, so white light fans out into a spectrum.",
+          "Drops send light back at about 42° from the point directly opposite the sun, which is the shadow of your head. All the drops at that angle form a circle, and the ground cuts off the bottom half.",
+          "That means the sun must be behind you. It also means everyone sees their own personal rainbow made by different drops."],
+    try: "Stand with the sun at your back and spray a fine mist from a garden hose. From an aeroplane you can sometimes see the full circle.",
+    fact: "In a double rainbow, the outer bow comes from two bounces inside each drop, so its colours are in reverse order.",
+    next: "straw" },
+  { id: "straw", cat: "physics", q: "Why does a straw look bent in a glass of water?",
+    kid: "Light changes direction when it goes from water to air, and that tricks your eyes about where the straw is.",
+    how: ["Light travels about 25% slower in water than in air. When light crosses the boundary at an angle, the change in speed bends its path. This is called refraction.",
+          "Your brain assumes light always travels in straight lines. So it traces the bent rays backward and puts the underwater part of the straw somewhere it isn't.",
+          "The same bending lets lenses focus light. Glasses, cameras and the lens in your eye all work by refraction."],
+    try: "Put a coin in an empty mug and back away until it just disappears behind the rim. Then pour in water without moving, and the coin reappears.",
+    next: "glasses" },
+  { id: "glasses", cat: "body", q: "How do glasses help people see?",
+    kid: "Glasses bend the light a tiny bit so the picture lands in just the right spot at the back of your eye.",
+    how: ["Your eye works like a camera. The cornea and lens bend incoming light so that it focuses into a sharp image on the retina at the back.",
+          "If the eyeball is slightly too long, distant things come into focus in front of the retina and look blurry. That's nearsightedness. A lens thinner in the middle spreads the light a little first, moving the focus back.",
+          "If the eye is too short, or the lens stiffens with age, nearby things blur. A lens fatter in the middle adds extra bending."],
+    fact: "The image on your retina is upside down. Your brain flips it without you ever noticing.",
+    next: "color" },
+  { id: "wind", cat: "earth", q: "Why is it windy?",
+    kid: "The sun warms some places more than others. Warm air rises, and cooler air rushes in to take its place. That rushing is wind!",
+    how: ["The sun heats Earth unevenly: land more than sea, the equator more than the poles, dark fields more than snow. Warm air expands, gets less dense, and is pushed upward. That leaves lower pressure near the ground.",
+          "Air flows from high pressure toward low pressure, just like air rushing out of a popped balloon. A sea breeze is a small version: on a sunny day, land heats faster than water, and cool sea air flows inland.",
+          "On a big scale, Earth's spin curves the moving air. That's why weather systems swirl around highs and lows instead of flowing straight."],
+    next: "hotair" },
+  { id: "hotair", cat: "physics", q: "Why does hot air rise?",
+    kid: "Hot air is lighter than the cool air around it, so the cool air sinks underneath and pushes it up, like a beach ball in a pool.",
+    how: ["Heating air makes its molecules move faster, so they push farther apart. The same amount of air now takes up more room. In other words, it's less dense.",
+          "Gravity pulls harder on the denser, cooler air around it, which slides underneath and lifts the warm air up. Hot air doesn't really rise on its own. It's pushed up. That's buoyancy, the same thing that floats a boat.",
+          "A hot air balloon is a giant bag of warm air. Heat it 100 °C above the outside air and each cubic metre lifts about a quarter of a kilo."],
+    next: "rain" },
+  { id: "rain", cat: "earth", q: "Where does rain come from?",
+    kid: "The sun lifts water up into the sky as invisible vapour. Up high it cools into cloud droplets, and when they get big and heavy, they fall.",
+    how: ["Sunshine evaporates water from oceans, lakes, plants and puddles. That water vapour is invisible. As moist air rises, it cools, and cool air can't hold as much vapour.",
+          "The extra vapour condenses onto tiny specks of dust, salt or smoke and makes cloud droplets. They're so small that rising air keeps them floating.",
+          "Droplets collide and merge, or ice crystals grow at the top of the cloud and melt as they fall. About a million cloud droplets make one raindrop, and then it's heavy enough to fall."],
+    fact: "Raindrops aren't teardrop-shaped. Small ones are spheres, and bigger ones flatten into hamburger-bun shapes as they fall.",
+    next: "clouds" },
+  { id: "clouds", cat: "earth", q: "Why are clouds white, and sometimes grey?",
+    kid: "Clouds are made of trillions of tiny water drops that bounce all the colours of sunlight, and all colours mixed together look white.",
+    how: ["Cloud droplets are much bigger than air molecules. Instead of scattering mostly blue, they scatter every colour about equally, and all colours together look white.",
+          "A thick cloud scatters so much light back up toward space that very little gets through the bottom. Looking up from underneath, you see the shadowed base, so it looks grey. The top of the same storm cloud is dazzling white from an aeroplane.",
+          "A typical small puffy cloud weighs hundreds of tonnes. It floats because those tonnes are spread over billions of tiny droplets in rising air."],
+    next: "snow" },
+  { id: "snow", cat: "earth", q: "Why do snowflakes have six sides?",
+    kid: "Water likes to freeze in a six-sided pattern, so every snowflake starts as a tiny hexagon and grows arms from its corners.",
+    how: ["When water freezes, its molecules link up through hydrogen bonds into a lattice of hexagonal rings. A snow crystal is that pattern, magnified billions of times.",
+          "Vapour sticks more easily to the six corners because they poke out into fresh moist air. So arms sprout there.",
+          "As the crystal falls, it passes through air of different temperatures and humidity. That changes how the arms grow. All six arms share the same journey, so they match each other. No two flakes take exactly the same journey, so no two flakes match."],
+    next: "ice" },
+  { id: "ice", cat: "chem", q: "Why does ice float?",
+    kid: "When water freezes, it spreads out and gets a little puffier, so it's lighter than the water around it and floats on top.",
+    how: ["In almost every substance, the solid is denser than the liquid and sinks. Water is a weird exception.",
+          "Water molecules are V-shaped and sticky at their ends. As water freezes, hydrogen bonds lock them into an open hexagonal lattice with lots of empty space, so ice takes up about 9% more room than the water it came from.",
+          "This matters for life. Lakes freeze from the top down, and the ice insulates the water below, so fish survive winter. It's also why frozen pipes burst."],
+    try: "Fill a plastic bottle to the brim, cap it loosely, and freeze it. Watch the ice bulge out of the top.",
+    next: "salt-ice" },
+  { id: "salt-ice", cat: "chem", q: "Why do people put salt on icy roads?",
+    kid: "Salt gets in the way when water tries to freeze, so salty water stays liquid even when it's colder than freezing.",
+    how: ["Ice is always melting a little and re-freezing at its surface. At 0 °C the two balance out.",
+          "Dissolved salt breaks into ions that crowd in among the water molecules and make it harder for them to lock onto the ice. Melting keeps going while freezing slows, so the ice melts. The water now needs to be colder before it will freeze.",
+          "Road salt works well down to about −10 °C. In theory salt water can stay liquid down to −21 °C."],
+    try: "Lay a piece of string on an ice cube, sprinkle salt over it, and wait a minute. Then lift the cube by the string.",
+    next: "seasalt" },
+  { id: "seasalt", cat: "earth", q: "Why is the sea salty?",
+    kid: "Rivers carry tiny bits of salt from rocks into the sea. The sun lifts the water away, but the salt stays behind.",
+    how: ["Rain is slightly acidic, and over time it dissolves minerals out of rocks. Rivers carry those dissolved minerals to the sea. River water tastes fresh only because the salt is so dilute.",
+          "In the sea, water leaves by evaporating, and the salt can't come along. Over hundreds of millions of years the minerals built up. Hot vents on the sea floor add more.",
+          "Seawater is now about 3.5% salt, mostly sodium and chloride. If you dried out all the oceans, the salt would cover the land about 150 metres deep."],
+    next: "oceanblue" },
+  { id: "oceanblue", cat: "earth", q: "Why is the ocean blue?",
+    kid: "Water soaks up a bit of red light. When there's a whole lot of water, the leftover light that comes back to you is blue.",
+    how: ["A glass of water looks clear, but water absorbs a little red, orange and yellow light. Through metres of water that adds up, and what's left is blue. Divers notice that red things look grey just a few metres down.",
+          "The sea also reflects the sky, which adds to the blue on sunny days.",
+          "Green seas usually mean tiny algae (phytoplankton) or mud in the water. Satellites track the ocean's colour to map where life is blooming."],
+    next: "waves" },
+  { id: "waves", cat: "earth", q: "What makes waves in the ocean?",
+    kid: "Wind pushes on the water and makes ripples that grow into waves, and they can roll all the way across the ocean.",
+    how: ["Wind blowing over water drags on the surface and makes small ripples. The ripples give the wind more to push against, so they grow. Wave size depends on wind speed, how long it blows, and how much open water it blows over.",
+          "The energy travels, not the water. A floating bottle mostly bobs up and down in circles as a wave passes. Waves can cross whole oceans from storms thousands of kilometres away.",
+          "Near shore, the bottom of the wave drags on the seabed and slows down while the top keeps going. It tips over and breaks."],
+    next: "tides" },
+  { id: "tides", cat: "space", q: "What causes tides?",
+    kid: "The moon's gravity gently tugs on the ocean and makes it bulge. As Earth spins, the beach goes in and out of the bulge.",
+    how: ["The moon pulls on the near side of Earth a bit harder than on Earth's centre, and on the centre harder than on the far side. That stretch raises two bulges of water, one facing the moon and one facing away.",
+          "Earth spins through both bulges each day. So most coasts get two high tides about 12 hours 25 minutes apart. They come a little later each day because the moon moves along its orbit.",
+          "The sun does this too, about half as strongly. When the sun and moon line up at new and full moon, you get extra-big spring tides."],
+    next: "moonphase" },
+  { id: "moonphase", cat: "space", q: "Why does the moon change shape?",
+    kid: "Half the moon is always lit by the sun. As it goes around us, we see different amounts of the bright half.",
+    how: ["The moon makes no light of its own. The sun always lights the half that faces it.",
+          "Over about 29.5 days the moon circles Earth. At new moon the lit half faces away from us. At full moon we see it head-on. In between we see slices: crescent, half, and gibbous.",
+          "A common myth is that phases come from Earth's shadow. Earth's shadow only touches the moon during a lunar eclipse, and that's when the moon turns coppery red."],
+    try: "In a dark room with one lamp, hold an orange at arm's length and turn slowly in a circle. You'll see every phase on the orange.",
+    next: "moonfollow" },
+  { id: "moonfollow", cat: "space", q: "Why does the moon follow our car?",
+    kid: "The moon is so far away that driving down the road doesn't change where it is in the sky. Trees and houses are close, so they zip past.",
+    how: ["When you move, nearby things shift a lot against the background and faraway things barely shift. This is called parallax, and you can see it by closing one eye and then the other.",
+          "The moon is about 384,000 km away. Driving 10 km changes your angle to it by about a thousandth of a degree, which is far too little to notice. Meanwhile the trees fly backward, so your brain concludes the moon is keeping up with you.",
+          "Astronomers use the same effect, with Earth's orbit as the baseline, to measure distances to nearby stars."],
+    next: "round" },
+  { id: "seasons", cat: "earth", q: "Why do we have seasons?",
+    kid: "Earth is tilted. For part of the year our half leans toward the sun and gets more sunshine, and that's summer.",
+    how: ["Earth's axis is tilted about 23.4°, and it stays pointed the same way as we orbit. In June the northern half leans toward the sun. In December it leans away.",
+          "Leaning toward the sun means the sun climbs higher, so its light hits the ground more directly and concentrated, and days are longer. Both effects warm things up.",
+          "It's not about distance. Earth is actually closest to the sun in early January, which is the middle of northern winter. That's also why Australia has Christmas in summer."],
+    try: "Shine a torch straight down at paper, then at a slant. The slanted beam spreads out and looks dimmer. That's winter sunlight.",
+    next: "daynight" },
+  { id: "daynight", cat: "space", q: "Why is there day and night?",
+    kid: "Earth is spinning like a slow top. When our side faces the sun it's day, and when it turns away it's night.",
+    how: ["Earth spins once every 24 hours or so. The sun lights whichever half faces it, and the line between day and night sweeps around the planet.",
+          "The sun doesn't really rise or set. We're turning toward it or away from it. At the equator the ground moves at about 1,670 km/h.",
+          "A day was once much shorter. Hundreds of millions of years ago it was about 21–22 hours. The moon's tides act as a brake, slowing Earth's spin by a couple of milliseconds per century."],
+    next: "spin" },
+  { id: "spin", cat: "physics", q: "If Earth is spinning so fast, why don't we feel it?",
+    kid: "We're all spinning together, smoothly and steadily, like riding in a really smooth car. You only feel it when things speed up or slow down.",
+    how: ["Your body can't sense steady motion. It senses changes: speeding up, slowing down, or turning sharply. On a smooth plane flight at 900 km/h, you can pour a drink normally.",
+          "Earth's spin is about as smooth as motion gets. The turning is very gentle too, just one rotation a day, so the 'sideways pull' is tiny. You weigh about 0.3% less at the equator because of it.",
+          "We can still detect it. Stars wheel across the sky, and a long pendulum slowly swings around over the day. That's a Foucault pendulum, and many science museums have one."],
+    next: "gravity" },
+  { id: "gravity", cat: "physics", q: "Why do things fall down?",
+    kid: "Everything pulls on everything else a tiny bit. Earth is so gigantic that its pull is strong enough to bring everything down to the ground.",
+    how: ["Every bit of mass attracts every other bit. That's gravity. It's very weak, and you need a whole planet before it becomes obvious. Earth pulls everything toward its centre, and that's what 'down' means.",
+          "Without air, everything falls at the same rate, heavy or light. In 1971 the astronaut David Scott dropped a hammer and a feather on the moon, and they landed together.",
+          "Einstein's deeper picture is that mass bends space and time, and objects follow the straightest possible path through that curved spacetime. Why mass does this is still an open question."],
+    try: "Drop a book and a flat sheet of paper side by side. Then lay the paper on top of the book and drop them together.",
+    next: "round" },
+  { id: "round", cat: "space", q: "Why are planets round?",
+    kid: "Gravity pulls everything toward the middle, from every side equally, and that squishes a planet into a ball.",
+    how: ["Gravity pulls every bit of a planet toward its centre. Anything sticking out far, like a giant mountain, is pulled down harder than the rock around it. Over time, rock slowly flows and slumps.",
+          "The result is the shape where every point on the surface is about the same 'height', which is a sphere. Spinning planets bulge a little at the equator.",
+          "Small objects don't have enough gravity to overcome the strength of rock. Anything under a few hundred kilometres across can stay lumpy, which is why many asteroids look like potatoes."],
+    next: "twinkle" },
+  { id: "twinkle", cat: "space", q: "Why do stars twinkle?",
+    kid: "Starlight wobbles as it passes through moving air, like looking at a coin at the bottom of a swimming pool.",
+    how: ["Stars are so far away that each one is basically a single point of light. On its way to your eye, that light crosses turbulent air with pockets of different temperature. Each pocket bends the light slightly.",
+          "So the point flickers in brightness and position from moment to moment. Near the horizon you look through more air, and stars twinkle more, sometimes flashing colours.",
+          "Planets are close enough to show a tiny disc, and the flickers from different parts of the disc average out. So planets shine steadily. That's a handy way to spot one."],
+    next: "darksky" },
+  { id: "sun", cat: "space", q: "What is the sun, and why is it hot?",
+    kid: "The sun is a star, a gigantic ball of glowing gas. Deep inside, it squeezes tiny bits together, and that makes enormous amounts of heat and light.",
+    how: ["The sun is about 109 times wider than Earth and is mostly hydrogen and helium. Its own gravity crushes the core to about 15 million °C.",
+          "There, hydrogen nuclei slam together and fuse into helium. A tiny bit of mass disappears in each fusion and turns into energy, following E = mc². The sun turns about 4 million tonnes of matter into energy every second.",
+          "That energy takes many thousands of years to work its way out of the sun. Then it crosses to us in just over 8 minutes."],
+    fact: "About 1.3 million Earths would fit inside the sun.",
+    next: "darksky" },
+  { id: "darksky", cat: "space", q: "If there are so many stars, why is space dark?",
+    kid: "Most stars are so incredibly far away that their light hasn't even reached us yet, or it's too faint to see.",
+    how: ["If the universe were infinite, unchanging and endlessly old, every line of sight would end on a star, and the night sky would blaze. This is Olbers' paradox.",
+          "The resolution is that the universe has a beginning. It's about 13.8 billion years old, so we can only see light that has had time to get here.",
+          "The universe is also expanding, which stretches old light toward longer wavelengths. The afterglow of the Big Bang still fills the whole sky, but it has been stretched into microwaves our eyes can't see."],
+    next: "light" },
+  { id: "magnet", cat: "physics", q: "How do magnets work?",
+    kid: "A magnet is made of zillions of teeny-tiny magnets, all pointing the same way, so they add up into one strong pull.",
+    how: ["Every electron is itself a tiny magnet. In most materials, electrons pair up or point randomly, so their magnetism cancels.",
+          "In iron, nickel and cobalt, neighbouring atoms line up their tiny magnets in patches called domains. In ordinary iron the domains point every which way. In a magnet they're aligned, so the effect adds up to a field you can feel.",
+          "Ask why electrons are magnetic and you hit bedrock. Magnetism is one of the fundamental forces, and physics describes it very precisely without a deeper 'because'. Feynman's famous BBC interview on this is worth watching."],
+    try: "Stroke a steel paperclip about 30 times in one direction with a magnet. It becomes a weak magnet that can pick up another clip.",
+    next: "electricity" },
+  { id: "electricity", cat: "tech", q: "What is electricity, and how does it go through wires?",
+    kid: "Wires are full of teeny particles called electrons. A battery or power plant pushes them along, and that moving push is electricity.",
+    how: ["Metals have loose electrons that can wander between atoms. A battery or generator creates a push, called voltage, that nudges all of them in one direction. That flow is current.",
+          "Here's the surprise: each electron crawls along at a fraction of a millimetre per second. But the wire is already full of electrons, like a hose full of water. Push at one end and the push travels at nearly light speed, so the lamp lights instantly.",
+          "Resistance is how hard it is to push current through something. Thin wires resist more, and that resistance turns into heat. That's how toasters and bulb filaments work."],
+    next: "battery" },
+  { id: "battery", cat: "tech", q: "How does a battery work?",
+    kid: "A battery has two different materials inside that want to trade tiny bits called electrons. The only path is through your toy, so they power it on the way.",
+    how: ["A battery has two different materials, one that gives up electrons easily and one that grabs them. They're separated by an electrolyte, a substance that lets charged atoms (ions) through but not electrons.",
+          "The chemical reaction wants to move electrons from one side to the other. The only route is out through the wire, through your device, and back. Connecting a circuit lets the reaction run. When the reaction is used up, the battery is dead.",
+          "A rechargeable battery is one where you can push the reaction backward with electricity. In lithium-ion cells, lithium ions shuttle back and forth."],
+    try: "Push a galvanised (zinc-coated) nail and a piece of copper wire into a lemon. A multimeter will read about 1 volt. Chain four lemons to light a small LED.",
+    next: "fridge" },
+  { id: "fridge", cat: "tech", q: "How does a fridge keep things cold?",
+    kid: "A fridge doesn't make cold. It grabs the heat from inside and pumps it out the back.",
+    how: ["Evaporation soaks up heat. That's why wet skin feels cold. A fridge uses this with a special fluid called a refrigerant that boils at very low temperatures.",
+          "Inside the fridge, the liquid refrigerant evaporates in coils and absorbs heat from your food. A compressor squeezes the gas, which makes it hot, and pumps it to coils at the back. There it gives off its heat to the room and condenses back to liquid. Then it goes through a narrow valve, drops in pressure, gets cold again, and the loop repeats.",
+          "Air conditioners and heat pumps use the same cycle."],
+    try: "Carefully feel the coils at the back or bottom of your fridge. They're warm with heat taken from inside.",
+    next: "sweat" },
+  { id: "sweat", cat: "body", q: "Why does sweating cool you down?",
+    kid: "When sweat dries off your skin, it carries heat away with it, like blowing on hot soup.",
+    how: ["Molecules in liquid sweat move at a range of speeds. The fastest ones have enough energy to escape into the air. Losing your most energetic molecules leaves the rest slower on average, and slower means cooler.",
+          "Evaporating just one gram of sweat removes enough heat to warm 2.4 litres of water by 1 °C.",
+          "On humid days the air is already loaded with vapour, sweat evaporates slowly, and it just drips. That's why 30 °C and humid feels worse than 30 °C and dry."],
+    try: "Lick the back of one hand, then blow across both hands. The wet one feels much colder.",
+    next: "goosebumps" },
+  { id: "thunder", cat: "earth", q: "What are lightning and thunder?",
+    kid: "Lightning is a giant spark from a storm cloud, like the zap you get from a doorknob but way bigger. Thunder is the BOOM of the air it heats up.",
+    how: ["Inside a storm cloud, ice crystals and soft hail collide in strong updrafts and transfer electric charge. Usually the top becomes positive and the bottom negative.",
+          "When the charge difference gets big enough, the air breaks down and a channel of current flashes across. It heats that channel to about 30,000 °C, roughly five times hotter than the sun's surface, in millionths of a second.",
+          "The air expands explosively, and that shock wave is thunder. Light arrives almost instantly, but sound travels about 1 km every 3 seconds."],
+    try: "Count the seconds between flash and boom. Divide by 3 for kilometres, or by 5 for miles.",
+    next: "sound" },
+  { id: "sound", cat: "physics", q: "What is sound?",
+    kid: "Sound is shaking. When something wiggles, it bumps the air, the air bumps your ear, and you hear it.",
+    how: ["A vibrating object, like a guitar string or your vocal cords, pushes and pulls on the air next to it. That makes ripples of squeezed and stretched air that spread out at about 343 metres per second.",
+          "Your eardrum wiggles in step with those ripples. Tiny bones pass the wiggles to the cochlea, where hair cells turn them into nerve signals. Fast vibrations sound high-pitched and slow ones sound low.",
+          "Sound needs something to travel through, so space is silent. It moves even faster through water and steel. An echo is sound bouncing off a hard surface and coming back."],
+    try: "Put your fingers on your throat and hum. Then stretch a balloon over a bowl, sprinkle rice on it, and shout nearby.",
+    next: "phone" },
+  { id: "phone", cat: "tech", q: "How does a phone send my voice to someone far away?",
+    kid: "Your phone turns your voice into an invisible light called radio waves and beams it to a tower. It goes through a network and gets turned back into sound.",
+    how: ["The microphone turns pressure waves in the air into a wiggling electrical signal. The phone measures it thousands of times a second and turns your voice into numbers, then compresses them.",
+          "Those numbers are coded onto radio waves by subtly changing them. Radio waves are the same stuff as light, just with wavelengths centimetres long, so they pass through walls.",
+          "A nearby cell tower picks up the signal and passes it through cables, often fibre-optic lines carrying pulses of light, to a tower near your friend. Their phone reverses everything, and a speaker vibrates the air into your voice."],
+    next: "touchscreen" },
+  { id: "touchscreen", cat: "tech", q: "How does a touchscreen know where my finger is?",
+    kid: "Your finger carries a tiny bit of electricity. The screen has a grid of invisible wires that feels exactly where your finger changes it.",
+    how: ["Under the glass is a fine grid of transparent conductors with a small electric field across it.",
+          "Your body conducts electricity. When a fingertip comes close, it draws away a little charge and changes the capacitance where the grid lines cross. The phone scans the grid many times a second and works out where the change is. It can track several fingers at once.",
+          "That's why ordinary gloves don't work: they insulate your finger. Touchscreen gloves have conductive thread in the fingertips."],
+    next: "electricity" },
+  { id: "plane", cat: "tech", q: "How do aeroplanes stay up?",
+    kid: "The wings are tilted to push air down. When you push air down, the air pushes the plane up!",
+    how: ["A wing is shaped and angled so that it deflects a huge amount of air downward as it moves. Push air down and, by Newton's third law, the air pushes the wing up. A big jet sends tonnes of air downward every second.",
+          "You can say the same thing in terms of pressure: air flows faster over the top of the wing, and pressure there drops below the pressure underneath. These are two descriptions of one flow.",
+          "The popular story that air on top 'must catch up' with air underneath is wrong. Air over the top actually arrives at the back well before the air underneath."],
+    try: "As a passenger in a car, hold your flat hand out the window and slowly tilt the front edge up. Feel the lift.",
+    next: "gravity" },
+  { id: "engine", cat: "tech", q: "How does a car engine work?",
+    kid: "Inside the engine, tiny puffs of fuel go BANG over and over. Each bang pushes a part that turns the wheels.",
+    how: ["A petrol engine has cylinders with pistons sliding inside. Each cycle has four strokes. On the intake stroke the piston drops and sucks in air and fuel. On the compression stroke it rises and squeezes them. Then a spark ignites the mixture, and the hot gas expands and slams the piston down. That's the power stroke. Last comes the exhaust stroke, which pushes out the burnt gas.",
+          "The pistons turn a crankshaft, which converts up-and-down motion into spinning, much like your legs on bike pedals. At highway speed this happens thousands of times a minute.",
+          "An electric car skips all of that. Magnets and coils in the motor push against each other to spin it directly."],
+    next: "fire" },
+  { id: "toilet", cat: "tech", q: "How does a toilet flush?",
+    kid: "A big gush of water fills a curvy pipe, and once the pipe is full it sucks everything in the bowl down and away.",
+    how: ["Behind the bowl is a curved pipe shaped like an upside-down U, called the trap. Normally the water sits below its top bend, which keeps sewer smells out.",
+          "Pulling the handle dumps the tank into the bowl fast. Water spills over the bend and fills the pipe. Once the pipe is full, falling water on the far side pulls the rest along behind it. That's a siphon, and it empties the bowl with that gurgle.",
+          "When air gets into the pipe, the siphon breaks, and the tank refills the bowl to the normal level."],
+    try: "Siphon water from a high bowl to a low one with a bendy tube. Fill the tube first, then put one end in each bowl.",
+    next: "seasalt" },
+  { id: "mirror", cat: "physics", q: "How do mirrors work?",
+    kid: "A mirror is super-duper smooth and shiny, so light bounces off it in neat straight lines instead of scattering everywhere.",
+    how: ["A mirror is glass with a thin coat of aluminium or silver behind it. Metals are full of free electrons that absorb and immediately re-emit light, so they reflect nearly all of it.",
+          "Smoothness is the key. White paper reflects lots of light too, but its rough surface sends it off in every direction. A mirror's surface is so smooth that every ray bounces at the same angle it arrived, and the image stays intact.",
+          "Mirrors don't flip left and right. They flip front and back. Your reflection's raised right hand is still on the right side, as seen from your side of the mirror."],
+    next: "straw" },
+  { id: "fire", cat: "chem", q: "What is fire?",
+    kid: "Fire is what happens when fuel, like wood, joins up super fast with the air. It lets out heat and light all at once.",
+    how: ["Fire is a fast chemical reaction: fuel combines with oxygen to make carbon dioxide and water, releasing energy as heat and light. It needs three things, called the fire triangle: fuel, oxygen and heat. Take any one away and it goes out.",
+          "Solids don't really burn. Heat turns them into gas, and the gas burns. A candle's wick pulls up melted wax, which vaporises and burns in the flame.",
+          "The yellow glow comes from tiny soot particles heated until they glow. The blue at the base is light given off by molecules in the middle of reacting."],
+    try: "Grown-ups only: blow out a candle and immediately hold a lit match in the smoke trail, 2–3 cm above the wick. The flame jumps down and relights it.",
+    next: "breathe" },
+  { id: "rust", cat: "chem", q: "Why does metal rust?",
+    kid: "Iron slowly mixes with air and water and turns into flaky orange stuff called rust.",
+    how: ["Rust is iron oxide. Iron atoms give electrons to oxygen in a slow chemical reaction, and it needs water to get going. Salt speeds it up dramatically, which is why cars rust faster where roads are salted.",
+          "Rust is flaky and takes up more space than the iron it came from. It cracks off and exposes fresh metal underneath, so rusting keeps eating inward.",
+          "Aluminium reacts with oxygen even more eagerly. But its oxide forms a tight, invisible skin that seals out more air. Stainless steel contains chromium, which does the same trick."],
+    next: "fire" },
+  { id: "soap", cat: "chem", q: "How does soap clean things?",
+    kid: "Soap has one end that loves water and one end that loves grease. It grabs the grease and lets water wash it away.",
+    how: ["Oil and water don't mix, so water alone just slides over greasy dirt. A soap molecule has a head that likes water and a long tail that likes oil.",
+          "The tails burrow into grease, and soap molecules surround the blob in a little ball called a micelle, with the heads facing out. The whole package is now water-friendly and rinses away.",
+          "Soap also destroys many viruses, including flu and coronaviruses. Their outer coat is a fatty membrane that soap pries apart. That's why 20 seconds of scrubbing works so well."],
+    try: "Sprinkle pepper on a plate of water, then touch the middle with a soapy finger. The pepper races to the edges as the soap breaks the water's surface tension.",
+    next: "atoms" },
+  { id: "atoms", cat: "chem", q: "What is everything made of?",
+    kid: "Everything is made of teeny-tiny building blocks called atoms, way too small to see, kind of like LEGO for the whole universe.",
+    how: ["All ordinary matter is made of atoms, and there are 118 known kinds, called elements. What makes an element is the number of protons in the nucleus: 1 for hydrogen, 6 for carbon, 79 for gold.",
+          "Atoms are mostly empty space. If an atom were a sports stadium, its nucleus would be a peppercorn on the centre spot, with electrons buzzing around the stands.",
+          "So why don't you fall through your chair? Electrons in your atoms and the chair's push back hard, through electric repulsion and a quantum rule that stops them from crowding into the same space."],
+    fact: "A single grain of salt contains about a billion billion atoms (10¹⁸).",
+    next: "states" },
+  { id: "states", cat: "chem", q: "Why do things melt?",
+    kid: "The tiny bits inside things are always jiggling. Heat makes them jiggle so hard they slip apart, and a solid becomes a liquid.",
+    how: ["Molecules are never still. In a solid they're locked in place and vibrate where they sit. Adding heat makes them vibrate harder.",
+          "At the melting point they shake loose enough to slide past each other but stay close: that's a liquid. More heat and they break free entirely and fly around: that's a gas.",
+          "Different substances melt at wildly different temperatures depending on how strongly their particles hold on. Mercury melts at −39 °C and tungsten at 3,422 °C."],
+    next: "popcorn" },
+  { id: "popcorn", cat: "chem", q: "Why does popcorn pop?",
+    kid: "Each kernel has a drop of water inside. When it gets hot, the water turns to steam, pushes and pushes, then POP!",
+    how: ["A popcorn kernel has a tough, waterproof hull around starch with about 14% water.",
+          "Heat the kernel and the water becomes steam. The hull traps it, so pressure builds to about 9 times normal air pressure while the starch softens into a hot goo. At around 180 °C the hull bursts.",
+          "The pressure drops instantly, steam blasts out, and the starch foams outward and sets into the fluffy shape you eat. Kernels that dried out or have a cracked hull don't pop. Those are the duds at the bottom."],
+    next: "bread" },
+  { id: "bread", cat: "chem", q: "Why does bread puff up?",
+    kid: "Tiny living things called yeast eat the sugar in the dough and burp out gas bubbles that puff it up.",
+    how: ["Yeast is a single-celled fungus. In dough it eats sugars and gives off carbon dioxide gas plus a little alcohol.",
+          "Kneading builds gluten, stretchy protein strands that act like millions of tiny balloons trapping the gas. In the oven the bubbles expand, the alcohol cooks off, and the structure sets. The holes in a slice are those old bubbles.",
+          "Cakes often skip yeast and use baking soda or baking powder. An acid plus a base make the same carbon dioxide gas, which is the same reaction as a vinegar-and-bicarb 'volcano'."],
+    try: "Stir a spoon of sugar and a packet of yeast into warm water in a bottle and stretch a balloon over the top. Within an hour the balloon inflates.",
+    next: "apple" },
+  { id: "apple", cat: "chem", q: "Why does a cut apple turn brown?",
+    kid: "When you cut an apple, its inside meets the air, and a natural helper in the apple makes a brown colour, kind of like a bruise.",
+    how: ["Apple cells contain compounds called polyphenols and an enzyme that can react them with oxygen, but they're kept in separate compartments. Cutting breaks cells open and lets them meet the air.",
+          "The enzyme turns the polyphenols into brown pigments, related to melanin, the pigment in skin. It's harmless.",
+          "Lemon juice slows it because acid weakens the enzyme and vitamin C mops up oxygen. Cold slows it too. Bananas and avocados brown the same way."],
+    next: "onion" },
+  { id: "onion", cat: "chem", q: "Why do onions make you cry?",
+    kid: "Cutting an onion lets out an invisible gas that tickles your eyes, so your eyes make tears to wash it away.",
+    how: ["Onions defend themselves chemically. Slicing breaks cells and lets enzymes turn sulfur compounds into a gas called syn-propanethial-S-oxide.",
+          "The gas drifts up and dissolves in the moisture on your eyes, where it irritates nerve endings. Your eyes respond by flooding with tears to rinse it off.",
+          "Chilling the onion slows the reaction. A sharp knife crushes fewer cells. And cutting near a fan blows the gas away."],
+    next: "atoms" },
+  { id: "leaves", cat: "bio", q: "Why do leaves change colour in autumn?",
+    kid: "Leaves have yellow and orange hiding in them all summer. In autumn the green fades away and the hidden colours show!",
+    how: ["Leaves are green because of chlorophyll, which captures sunlight to make food. A leaf constantly breaks it down and rebuilds it.",
+          "As days shorten, the tree stops rebuilding it and pulls nutrients back into its branches before dropping the leaves. With the green gone, yellow and orange pigments called carotenoids, the same ones in carrots, show through. They were there all along.",
+          "Reds and purples are different. Some trees, like maples, actively make new red pigments in autumn, and sunny days and cool nights make them brighter."],
+    next: "photosynthesis" },
+  { id: "photosynthesis", cat: "bio", q: "How do plants eat?",
+    kid: "Plants make their own food from sunshine, air and water. They're like little solar-powered kitchens.",
+    how: ["In photosynthesis, leaves take in carbon dioxide from the air and water from the roots. They use the energy of sunlight to build sugar, releasing oxygen as a leftover.",
+          "Here's the jaw-dropper: most of a tree's mass came out of the air. The carbon atoms in wood were floating around as CO₂ before the leaves grabbed them. The soil provides only a small amount of minerals.",
+          "When wood burns, or when you digest a vegetable, that same reaction runs in reverse. The stored sunlight comes back out as energy, and the carbon goes back into the air."],
+    fact: "Leaves look green because chlorophyll absorbs red and blue light and reflects green, the colour it uses least.",
+    next: "leaves" },
+  { id: "firefly", cat: "bio", q: "How do fireflies glow?",
+    kid: "Fireflies have special chemicals in their tummies that mix together and make light, without getting hot at all.",
+    how: ["Fireflies make light by bioluminescence. A molecule called luciferin reacts with oxygen, with help from an enzyme called luciferase, and gives off light.",
+          "It's remarkably efficient: nearly all the energy comes out as light and almost none as heat. Compare that with an old light bulb, which wastes over 90% as heat. Fireflies control their flashing by controlling oxygen flow to their light organs.",
+          "Each species has its own flash code for finding mates. Most of the ocean's glowing creatures use similar chemistry."],
+    next: "bulb" },
+  { id: "flamingo", cat: "bio", q: "Why are flamingos pink?",
+    kid: "Flamingos eat lots of pink and orange food, like tiny shrimp, and the colour ends up in their feathers!",
+    how: ["Flamingos are born grey. Their pink comes from carotenoid pigments in their diet of algae and tiny shrimp-like animals.",
+          "Their liver processes the pigments and deposits them in growing feathers, skin and even egg yolks. The more carotenoids, the deeper the pink. Zoos add pigment to their food to keep them rosy.",
+          "These are the same pigments that make carrots orange and turn autumn leaves yellow."],
+    next: "leaves" },
+  { id: "dognose", cat: "bio", q: "Why can dogs smell so much better than us?",
+    kid: "Dogs' noses have way more smell-catchers than ours, and a big part of their brain is just for figuring out smells.",
+    how: ["Humans have around 6 million odour receptors. Many dogs have up to 300 million, and the part of their brain that analyses smell is proportionally much bigger.",
+          "Their noses are built for it too. When a dog sniffs, some air goes to the lungs, and some is diverted to a dedicated smelling area. Dogs breathe out through side slits, so outgoing air doesn't blow away the scent they're sampling.",
+          "Each nostril smells separately, which helps them track where a scent is coming from."],
+    next: "color" },
+  { id: "color", cat: "body", q: "How do our eyes see colours?",
+    kid: "The back of your eye has three kinds of colour catchers. Your brain mixes their signals together to make every colour you see.",
+    how: ["Your retina has cone cells of three types. Each responds most to a different range of wavelengths: roughly short (blue), medium (green) and long (yellow-red).",
+          "Every colour you see is your brain comparing those three signals. Yellow light excites the red and green cones about equally. So does a mix of red and green light, which is how screens fool you with only three colours of pixel.",
+          "Most mammals, including dogs, have only two cone types. Mantis shrimp have twelve or more, yet tests suggest they're worse than us at telling similar colours apart."],
+    next: "glasses" },
+  { id: "sleep", cat: "body", q: "Why do we have to sleep?",
+    kid: "Sleep is when your brain tidies up and saves all the things you learned today, and your body fixes itself.",
+    how: ["Scientists still don't fully agree on why sleep evolved, but it clearly does several jobs. During deep sleep the brain seems to replay and strengthen the day's memories. One leading idea is that it also flushes out waste products that build up while we're awake.",
+          "The body uses sleep for repair and growth. Growth hormone is released mostly during deep sleep, and that's one reason babies sleep so much.",
+          "Every animal studied sleeps in some form, even jellyfish. Going without it quickly hurts attention, mood and memory."],
+    fact: "Newborns sleep about 14–17 hours a day, in short bursts. You already know that.",
+    next: "yawn" },
+  { id: "yawn", cat: "body", q: "Why do we yawn?",
+    kid: "Nobody knows for sure! It might help wake up your brain, and seeing someone yawn makes you want to yawn too.",
+    how: ["This is a great example of 'scientists are still figuring it out'. The old idea that yawning brings in extra oxygen hasn't held up in experiments.",
+          "One idea is that the big stretch and deep breath help cool the brain. Another is that it helps you shift between sleepy and alert. Yawns are contagious, even reading about them can trigger one, and that may be a social signal that keeps a group's alertness in sync.",
+          "It's fine to tell a child 'nobody knows yet'. Some of their questions may become their life's work."],
+    next: "hiccup" },
+  { id: "hiccup", cat: "body", q: "What are hiccups?",
+    kid: "Hiccups happen when the muscle under your lungs gets a little jumpy and twitches, and your throat snaps shut with a 'hic!'",
+    how: ["The diaphragm is a dome of muscle under your lungs that pulls down to make you breathe in. A hiccup is a sudden twitch of it that yanks air in. About a third of a second later your vocal cords slam shut, making the 'hic'.",
+          "Triggers include eating fast, fizzy drinks and excitement. Why the reflex exists is unclear. Ideas include a leftover from our amphibian ancestors or a reflex that helps babies burp up air while nursing.",
+          "Most cures work, if at all, by interrupting the breathing rhythm, like holding your breath or sipping cold water."],
+    next: "breathe" },
+  { id: "breathe", cat: "body", q: "Why do we have to breathe?",
+    kid: "Every tiny part of your body needs oxygen from the air to turn food into energy, and breathing brings it in.",
+    how: ["Your cells release energy from food by combining it with oxygen. It's the same chemistry as fire, done slowly and in controlled steps. Breathing brings in oxygen and gets rid of the carbon dioxide this makes.",
+          "Lungs branch into about 500 million tiny air sacs where oxygen crosses into the blood and CO₂ crosses out. Spread flat, their surface would cover roughly half a tennis court.",
+          "The urge to breathe comes mostly from rising carbon dioxide, not falling oxygen. That's why holding your breath gets uncomfortable fast."],
+    next: "blood" },
+  { id: "blood", cat: "body", q: "Why is blood red?",
+    kid: "Blood is full of tiny red discs that carry air around your body, and the iron in them makes them red.",
+    how: ["Red blood cells are packed with haemoglobin, a protein built around iron atoms that grab oxygen in the lungs and release it in the tissues. The iron-containing part, called haem, absorbs blue-green light and looks red.",
+          "Blood is always red: bright cherry when full of oxygen and darker red when it has given oxygen away. Blood is never blue.",
+          "Veins look blue because of how skin scatters and absorbs light. Red light goes deeper and gets absorbed by the blood, so the light bouncing back from over a vein is relatively bluer."],
+    fact: "Octopuses really do have blue blood. Their oxygen carrier uses copper instead of iron.",
+    next: "vaccine" },
+  { id: "eat", cat: "body", q: "Why do we need to eat?",
+    kid: "Food is your body's fuel and building blocks. It gives you energy to play and the stuff you need to grow.",
+    how: ["Food does two jobs. It's fuel: cells break down sugars and fats with oxygen and store the energy in a molecule called ATP, which powers everything from muscles to thoughts.",
+          "It's also building material. Proteins are broken into amino acids and rebuilt into your muscles, enzymes and hair. Minerals like calcium become bone.",
+          "Your brain is about 2% of your weight but uses about 20% of your energy. A young child's brain uses an even bigger share."],
+    next: "breathe" },
+  { id: "goosebumps", cat: "body", q: "Why do we get goosebumps?",
+    kid: "Tiny muscles make your hairs stand up. It's a leftover trick from when our ancestors were furry.",
+    how: ["Each hair has a tiny muscle attached. When you're cold or scared, your nervous system tightens these muscles, the hairs stand up, and the skin around them puckers into bumps.",
+          "For furry animals this is useful. Fluffed-up fur traps more warm air, and it makes an animal look bigger to a threat, like a cat's puffed tail. We've lost most of our fur but kept the reflex.",
+          "Music, awe and a strong emotion can trigger it too, through the same alarm system."],
+    next: "sweat" },
+  { id: "haircut", cat: "body", q: "Why doesn't a haircut hurt?",
+    kid: "The hair you can see isn't alive, so it has no feelings. The living part is hiding under your skin.",
+    how: ["Hair and nails are made of keratin, a tough protein. They're built by living cells at the root, inside a follicle or under the base of the nail.",
+          "Once pushed out, those cells are dead and packed with keratin, with no nerves or blood vessels. Cutting them doesn't hurt. Pulling hurts because it tugs on the living follicle, which is surrounded by nerves.",
+          "Scalp hair grows about 1 cm a month. Fingernails grow about 3 mm a month, faster on your dominant hand."],
+    next: "goosebumps" },
+  { id: "bellybutton", cat: "body", q: "Why do we have belly buttons?",
+    kid: "Before you were born, a tube connected your tummy to your mum and gave you food. Your belly button is where it was!",
+    how: ["Before birth, a baby gets oxygen and nutrients through the umbilical cord, which connects to the placenta. The baby's blood travels through it to swap supplies with the mother's blood. The two bloodstreams don't actually mix.",
+          "After birth the cord is clamped and cut. It has no nerves, so it doesn't hurt. The stump dries and falls off in a week or two, and the scar is your belly button.",
+          "Whether you get an 'innie' or an 'outie' depends mostly on how the skin heals, not on how the cord was cut."],
+    next: "eat" },
+  { id: "vaccine", cat: "body", q: "How do vaccines work?",
+    kid: "A vaccine shows your body a harmless 'wanted poster' of a germ, so your body knows how to fight it if the real one ever shows up.",
+    how: ["Your immune system learns. The first time it meets a new germ, it takes days to build the right antibodies and immune cells, and meanwhile you get sick.",
+          "A vaccine gives it that first meeting safely. It might contain a weakened or killed germ, a piece of one, or instructions for your cells to make a harmless piece, as mRNA vaccines do. The immune system responds and keeps memory cells around for years.",
+          "If the real germ arrives, those memory cells recognise it and respond fast, often before you feel ill. When enough people are protected, the germ struggles to spread at all, and that shields newborns too young for some vaccines."],
+    next: "soap" },
+  { id: "quake", cat: "earth", q: "What causes earthquakes?",
+    kid: "Earth's outside is cracked into giant puzzle pieces that slowly push and slide. Sometimes they get stuck, then slip all at once, and the ground shakes.",
+    how: ["Earth's crust is broken into tectonic plates that ride on the hot, slowly flowing rock of the mantle beneath. They move a few centimetres a year, about as fast as your fingernails grow.",
+          "Where plates meet, friction holds them together while stress builds up for years or centuries. When the rock finally gives, it jerks and releases energy as waves that shake the ground.",
+          "The same plate motion builds mountains, opens oceans and feeds volcanoes. The Atlantic is about 20 m wider than when Columbus crossed it."],
+    next: "round" },
+  { id: "divzero", cat: "math", q: "Why can't you divide by zero?",
+    kid: "Sharing 6 cookies among 0 friends doesn't make sense, because there's nobody to give them to! So there isn't an answer.",
+    how: ["Division undoes multiplication: 6 ÷ 2 = 3 because 3 × 2 = 6. So 6 ÷ 0 would have to be a number that gives 6 when you multiply it by 0. But anything times 0 is 0, so no such number exists.",
+          "0 ÷ 0 has the opposite problem. Every number times 0 gives 0, so every number qualifies, and no single answer makes sense.",
+          "Mathematicians call both 'undefined'. You can still ask what happens as you divide by smaller and smaller numbers: 6 ÷ 0.001 = 6,000. That's the gateway idea of limits and calculus."],
+    next: "infinity" },
+  { id: "infinity", cat: "math", q: "What's the biggest number?",
+    kid: "There isn't one! Whatever number you think of, you can always add one more.",
+    how: ["For any number you name, adding 1 gives a bigger one, so the counting numbers never end. Infinity isn't a number at the end of the line. It's the name for 'never ending'.",
+          "Here's a mind-bender from Georg Cantor in the 1870s: some infinities are bigger than others. The decimals between 0 and 1 can't be listed one by one, even in an infinite list. There are 'more' of them than there are counting numbers.",
+          "Huge finite numbers are fun too. A googol is 1 followed by 100 zeros, which is more than the number of atoms in the observable universe."],
+    next: "million" },
+  { id: "million", cat: "math", q: "How big is a million? A billion?",
+    kid: "If you counted one number every second without stopping, a million would take about 11 days. A billion would take more than 30 years!",
+    how: ["A million seconds is about 11.6 days. A billion seconds is about 31.7 years. A trillion seconds is about 31,700 years, longer than recorded history.",
+          "Our brains handle small quantities well and huge ones badly, so a million and a billion 'feel' similar, but one is a thousand times the other.",
+          "Turning big numbers into time, distance or stacks of something makes them real. A stack of a billion sheets of paper would be about 100 km tall, reaching the edge of space."],
+    next: "birthday" },
+  { id: "pi", cat: "math", q: "What is pi?",
+    kid: "If you measure all the way around any circle, it's always a little more than three times as long as straight across it. That 'little more than three' is pi.",
+    how: ["Pi (π) is the ratio of a circle's circumference to its diameter, and it's the same for every circle, from a coin to a planet's orbit: 3.14159…",
+          "Pi is irrational. Its decimals never end and never settle into a repeating pattern, and no fraction equals it exactly, though 22/7 is close. Computers have calculated it to over 100 trillion digits. NASA uses about 15 for interplanetary navigation.",
+          "Pi shows up in surprising places, including waves, probability and the shape of rivers, because circles and cycles are hidden inside so much maths."],
+    try: "Wrap a string around a tin can, then measure the string and the can's width. Divide the first by the second.",
+    next: "hexagon" },
+  { id: "hexagon", cat: "math", q: "Why do bees build hexagons?",
+    kid: "Hexagons fit together with no gaps and use the least wax, so bees get the most honey room for the least work.",
+    how: ["Only three regular shapes tile a flat surface with no gaps: triangles, squares and hexagons. Of those, hexagons enclose the most area for a given length of wall.",
+          "Mathematicians long suspected hexagons were the best possible way to divide a surface into equal cells using the least total wall. Thomas Hales finally proved this 'honeycomb conjecture' in 1999.",
+          "Bees may not plan it. Some research suggests round cells, packed tightly while the wax is warm and soft, get pulled into hexagons, the way soap bubbles pressed together form flat walls."],
+    next: "snow" },
+  { id: "degrees", cat: "math", q: "Why does a circle have 360 degrees?",
+    kid: "People long ago picked 360 because it's easy to cut into equal pieces: halves, thirds, quarters, and lots more.",
+    how: ["The habit probably traces back to ancient Babylonian astronomers, who counted in base 60. That's also why an hour has 60 minutes and a minute 60 seconds.",
+          "360 is wonderfully divisible: it splits evenly by 2, 3, 4, 5, 6, 8, 9, 10, 12, 15, 18, 20 and more, which made sharing out angles easy without fractions. It's also close to the number of days in a year, so the sun moves about one degree a day against the stars.",
+          "Mathematicians often prefer radians instead, where a full turn is 2π. That unit comes from the circle itself rather than from tradition."],
+    next: "pi" },
+  { id: "birthday", cat: "math", q: "How many people need to be in a room for two to share a birthday?",
+    kid: "Just 23! It sounds way too few, but there are so many pairs of people that a match sneaks in.",
+    how: ["With 23 people, the chance that at least two share a birthday is just over 50%. With 70 people it's 99.9%.",
+          "The trick is that you're not looking for someone who matches you. Any pair will do, and 23 people form 253 different pairs. Each pair has only a small chance of matching, but with 253 chances it adds up fast.",
+          "This 'birthday paradox' is a great lesson in how bad our intuition is with probability. It matters in real life too, for example in computer security."],
+    next: "million" },
+  { id: "recurring", cat: "math", q: "Is 0.999… (repeating forever) really equal to 1?",
+    kid: "Yes! It's just a different way of writing the very same number, like how 'two' and '2' are the same thing.",
+    how: ["Start with 1/3 = 0.333…. Multiply both sides by 3: 3/3 = 0.999…. And 3/3 is 1.",
+          "Another way to see it: if two numbers are different, there must be some number between them. Try to name a number between 0.999… and 1. You can't, because the 9s never stop.",
+          "Many numbers have two decimal spellings, like 0.5 and 0.4999…. The puzzle is really about what an infinite decimal means, and the answer is the limit it approaches."],
+    next: "infinity" }
+];
+
+const STAGES = [
+  { name: "1 · Start with everyday things", blurb: "These answer the microwave and light-bulb questions directly. Read them in this order.", books: [
+    { id: "thing-explainer", t: "Thing Explainer", a: "Randall Munroe", why: "Explains machines using only the 1,000 most common words. It's a masterclass in talking to kids.", start: true },
+    { id: "way-things-work", t: "The Way Things Work Now", a: "David Macaulay", why: "Gorgeous cutaway drawings of hundreds of machines. You'll read it now, and your kid will at 6." },
+    { id: "bloomfield", t: "How Things Work: The Physics of Everyday Life", a: "Louis Bloomfield", why: "A college textbook organised by object: microwaves, bulbs, fridges. This is the deep reference.", start: true },
+    { id: "storm-teacup", t: "Storm in a Teacup", a: "Helen Czerski", why: "Physics in toast, coffee rings and popcorn. Charming and short." }
+  ]},
+  { name: "2 · Physics foundations", blurb: "Rebuild intuition first, with no heavy maths.", books: [
+    { id: "hewitt", t: "Conceptual Physics", a: "Paul Hewitt", why: "The classic intuition-first textbook. Dip in by chapter. An older edition from a used bookshop is fine." },
+    { id: "six-easy", t: "Six Easy Pieces", a: "Richard Feynman", why: "The best explainer ever, on atoms, energy and gravity." },
+    { id: "seven-brief", t: "Seven Brief Lessons on Physics", a: "Carlo Rovelli", why: "Relativity, quantum physics and black holes in about 80 pages." },
+    { id: "flying-circus", t: "The Flying Circus of Physics", a: "Jearl Walker", why: "Hundreds of real-world puzzles. Great for dipping into." }
+  ]},
+  { name: "3 · Chemistry & materials", blurb: "What stuff is made of, and why it behaves the way it does.", books: [
+    { id: "stuff-matters", t: "Stuff Matters", a: "Mark Miodownik", why: "One chapter per material: steel, glass, chocolate, concrete. A delight.", start: true },
+    { id: "disappearing-spoon", t: "The Disappearing Spoon", a: "Sam Kean", why: "The periodic table told through stories." },
+    { id: "elements", t: "The Elements", a: "Theodore Gray", why: "A photo of every element. A coffee-table book you'll share with your kid later." },
+    { id: "napoleons-buttons", t: "Napoleon's Buttons", a: "Penny Le Couteur & Jay Burreson", why: "17 molecules that changed history." }
+  ]},
+  { name: "4 · Life & the body", blurb: "For the 'why do we sleep' and 'why are flamingos pink' questions.", books: [
+    { id: "the-body", t: "The Body: A Guide for Occupants", a: "Bill Bryson", why: "Funny, accurate and full of facts you'll repeat." },
+    { id: "inner-fish", t: "Your Inner Fish", a: "Neil Shubin", why: "Why our bodies are built the way they are, through evolution." },
+    { id: "immense-world", t: "An Immense World", a: "Ed Yong", why: "How animals sense the world. Fuel for endless 'can dogs see colour?' answers." },
+    { id: "multitudes", t: "I Contain Multitudes", a: "Ed Yong", why: "The microbes that live in and on us." }
+  ]},
+  { name: "5 · Earth & sky", blurb: "Weather, seasons, stars and space.", books: [
+    { id: "cloudspotter", t: "The Cloudspotter's Guide", a: "Gavin Pretor-Pinney", why: "Weather science through the clouds overhead." },
+    { id: "astro-hurry", t: "Astrophysics for People in a Hurry", a: "Neil deGrasse Tyson", why: "The universe in short chapters." },
+    { id: "cosmos", t: "Cosmos", a: "Carl Sagan", why: "The original, and still the most inspiring." }
+  ]},
+  { name: "6 · Math as play", blurb: "Math as something curious and fun, not homework.", books: [
+    { id: "joy-x", t: "The Joy of x", a: "Steven Strogatz", why: "Short chapters from counting to calculus." },
+    { id: "fourth-dim", t: "Things to Make and Do in the Fourth Dimension", a: "Matt Parker", why: "Hands-on math you can do at the kitchen table." },
+    { id: "humble-pi", t: "Humble Pi", a: "Matt Parker", why: "What happens when math goes wrong in the real world. Very funny." }
+  ]},
+  { name: "7 · The big picture & being a curious parent", blurb: "Everything tied together, plus how small kids actually learn.", books: [
+    { id: "short-history", t: "A Short History of Nearly Everything", a: "Bill Bryson", why: "A tour of all of science. A perfect capstone." },
+    { id: "scientist-crib", t: "The Scientist in the Crib", a: "Gopnik, Meltzoff & Kuhl", why: "How babies learn. Your kid is already doing experiments." },
+    { id: "what-if", t: "What If?", a: "Randall Munroe", why: "Absurd questions answered with real science. Good practice for toddler-grade questions." }
+  ]}
+];
+
+/* ---------- storage (per-device, optional) ---------- */
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+const todayKey = new Date().toISOString().slice(0, 10);
+let saved = new Set(store.get("wf.saved", []));
+let seen = new Set(store.get("wf.seen", []));
+let booksRead = new Set(store.get("wf.books", []));
+let today = store.get("wf.today", { date: todayKey, ids: [] });
+if (today.date !== todayKey) today = { date: todayKey, ids: [] };
+
+const byId = Object.fromEntries(CARDS.map(c => [c.id, c]));
+const $ = s => document.querySelector(s);
+
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+const paras = arr => arr.map(p => `<p>${p}</p>`).join("");
+
+const BOOKMARK = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4.5L6 21z" stroke-linejoin="round"/></svg>`;
+
+function cardHTML(c, first) {
+  const nx = c.next && byId[c.next];
+  const on = saved.has(c.id);
+  return `<article class="card" data-id="${c.id}" style="--cat:var(--c-${c.cat})">
+    <div class="card-inner">
+      <div class="card-top">
+        <span class="chip"><i></i>${CATS[c.cat]}</span>
+        <button class="save" data-save="${c.id}" aria-pressed="${on}">${BOOKMARK}<span>${on ? "Saved" : "Save"}</span></button>
+      </div>
+      <h2 class="q">${c.q}</h2>
+      <ol class="ladder">
+        <li class="rung"><span class="rung-label">Rung 1 · Say it to a 4-year-old</span><p class="kid">${c.kid}</p></li>
+        <li class="rung"><span class="rung-label">Rung 2 · How it really works</span>${paras(c.how)}</li>
+        ${c.try ? `<li class="rung"><span class="rung-label">Rung 3 · Try it together</span><p>${c.try}</p></li>` : ""}
+      </ol>
+      ${c.fact ? `<p class="fact"><b>Dinner-table fact.</b> ${c.fact}</p>` : ""}
+      ${nx ? `<button class="next" data-next="${nx.id}"><div><small>But why…?</small><span>${nx.q}</span></div><span class="arrow" aria-hidden="true">↓</span></button>` : ""}
+    </div>
+    ${first ? `<div class="hint" aria-hidden="true">Scroll for the next why</div>` : ""}
+  </article>`;
+}
+
+/* ---------- feed ---------- */
+const feed = $("#feed");
+let filter = "all";
+let queue = [];
+let round = 0;
+
+function pool() { return CARDS.filter(c => filter === "all" || c.cat === filter); }
+function refill() {
+  const p = pool();
+  const fresh = shuffle(p.filter(c => !seen.has(c.id)));
+  const old = shuffle(p.filter(c => seen.has(c.id)));
+  if (round > 0) queue.push({ interstitial: true, n: p.length });
+  queue.push(...fresh, ...old);
+  round++;
+}
+function appendBatch(n = 8) {
+  let html = "";
+  for (let i = 0; i < n; i++) {
+    if (!queue.length) refill();
+    const item = queue.shift();
+    if (item.interstitial) {
+      html += `<article class="card interstitial" style="--cat:var(--accent)"><div class="card-inner">
+        <span class="chip"><i></i>Round complete</span>
+        <h2>You've climbed all ${item.n} ladders${filter === "all" ? "" : " in " + CATS[filter]}.</h2>
+        <p>The feed starts over in a new order. Seeing a card again is how it sticks, so try saying rung 1 out loud before you read it.</p>
+      </div></article>`;
+    } else {
+      html += cardHTML(item, feed.children.length === 0 && html === "");
+    }
+  }
+  feed.insertAdjacentHTML("beforeend", html);
+  observeCards();
+}
+function resetFeed() {
+  feed.innerHTML = ""; queue = []; round = 0;
+  feed.scrollTop = 0;
+  appendBatch();
+}
+
+const seenObs = new IntersectionObserver(entries => {
+  for (const e of entries) {
+    if (!e.isIntersecting) continue;
+    const id = e.target.dataset.id;
+    if (id) {
+      seen.add(id); store.set("wf.seen", [...seen]);
+      if (!today.ids.includes(id)) { today.ids.push(id); store.set("wf.today", today); renderToday(); }
+    }
+    if (e.target === feed.lastElementChild || e.target === feed.children[feed.children.length - 3]) appendBatch();
+  }
+}, { root: feed, threshold: 0.6 });
+function observeCards() { for (const el of feed.children) if (!el.dataset.obs) { el.dataset.obs = 1; seenObs.observe(el); } }
+
+function renderToday() {
+  $("#today").textContent = `${today.ids.length} today · ${seen.size}/${CARDS.length} explored`;
+}
+
+feed.addEventListener("click", e => {
+  const s = e.target.closest("[data-save]");
+  if (s) { toggleSave(s.dataset.save); return; }
+  const n = e.target.closest("[data-next]");
+  if (n) {
+    const card = n.closest(".card");
+    const nextId = n.dataset.next;
+    let target = card.nextElementSibling;
+    if (!target || target.dataset.id !== nextId) {
+      card.insertAdjacentHTML("afterend", cardHTML(byId[nextId], false));
+      target = card.nextElementSibling;
+      observeCards();
+    }
+    const smooth = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    feed.scrollTo({ top: target.offsetTop - feed.offsetTop, behavior: smooth ? "smooth" : "auto" });
+  }
+});
+
+function toggleSave(id) {
+  saved.has(id) ? saved.delete(id) : saved.add(id);
+  store.set("wf.saved", [...saved]);
+  document.querySelectorAll(`[data-save="${id}"]`).forEach(b => {
+    const on = saved.has(id);
+    b.setAttribute("aria-pressed", on);
+    const label = b.querySelector("span"); if (label) label.textContent = on ? "Saved" : "Save";
+  });
+  renderSavedCount();
+  if (!$("#view-saved").hidden) renderSaved();
+}
+
+/* ---------- filters ---------- */
+function renderFilters() {
+  const opts = [["all", "Everything"], ...Object.entries(CATS)];
+  $("#filters").innerHTML = opts.map(([k, label]) =>
+    `<button data-filter="${k}" aria-pressed="${filter === k}" ${k === "all" ? "" : `style="--cat:var(--c-${k})"`}>${k === "all" ? "" : "<i></i>"}${label}</button>`
+  ).join("");
+}
+$("#filters").addEventListener("click", e => {
+  const b = e.target.closest("[data-filter]"); if (!b) return;
+  filter = b.dataset.filter; store.set("wf.filter", filter);
+  renderFilters(); resetFeed();
+});
+
+/* ---------- saved ---------- */
+function renderSavedCount() { $("#savedCount").textContent = saved.size ? saved.size : ""; }
+function renderSaved() {
+  const items = [...saved].map(id => byId[id]).filter(Boolean);
+  $("#savedList").innerHTML = `<div><h2>Saved questions</h2><p class="lede">Cards you bookmarked to come back to. Tap one to open it.</p></div>` +
+    (items.length ? items.map(c => `<details class="saved-item" style="--cat:var(--c-${c.cat})">
+      <summary><span class="dot"></span><strong>${c.q}</strong></summary>
+      <div class="body"><p><b>${c.kid}</b></p>${paras(c.how)}${c.try ? `<p><b>Try it:</b> ${c.try}</p>` : ""}
+      <button class="remove" data-save="${c.id}">Remove from saved</button></div>
+    </details>`).join("") : `<div class="empty">Nothing saved yet. Tap <b>Save</b> on any card in the feed and it will show up here.</div>`);
+}
+$("#savedList").addEventListener("click", e => { const s = e.target.closest("[data-save]"); if (s) toggleSave(s.dataset.save); });
+
+/* ---------- books ---------- */
+function renderBooks() {
+  const all = STAGES.flatMap(s => s.books);
+  const done = all.filter(b => booksRead.has(b.id)).length;
+  $("#bookList").innerHTML = `<div><h2>Reading path</h2><p class="lede">${all.length} readable books, roughly in the order to work through them. If you only read three, read the ones marked start here. Tick books off as you finish them.</p></div>
+    <div class="progress"><div class="bar"><i style="width:${(done / all.length) * 100}%"></i></div><span>${done} of ${all.length} read</span></div>` +
+    STAGES.map(s => `<section class="stage"><h3>${s.name}</h3><p>${s.blurb}</p>${s.books.map(b => `
+      <label class="book${booksRead.has(b.id) ? " done" : ""}" for="bk-${b.id}">
+        <input type="checkbox" id="bk-${b.id}" data-book="${b.id}" ${booksRead.has(b.id) ? "checked" : ""}>
+        <div class="info"><span class="title">${b.t}</span>${b.start ? `<span class="badge">Start here</span>` : ""}<br><span class="author">${b.a}</span><p class="why">${b.why}</p></div>
+      </label>`).join("")}</section>`).join("");
+}
+$("#bookList").addEventListener("change", e => {
+  const id = e.target.dataset.book; if (!id) return;
+  e.target.checked ? booksRead.add(id) : booksRead.delete(id);
+  store.set("wf.books", [...booksRead]);
+  const y = $("#view-books .list").scrollTop;
+  renderBooks();
+  $("#view-books .list").scrollTop = y;
+});
+
+/* ---------- views ---------- */
+const VIEWS = ["feed", "saved", "books"];
+function show(view) {
+  if (!VIEWS.includes(view)) view = "feed";
+  for (const v of VIEWS) {
+    $("#view-" + v).hidden = v !== view;
+    const t = $("#tab-" + v);
+    v === view ? t.setAttribute("aria-current", "page") : t.removeAttribute("aria-current");
+  }
+  if (view === "saved") renderSaved();
+  if (view === "books") renderBooks();
+}
+document.querySelector(".tabs").addEventListener("click", e => {
+  const b = e.target.closest("[data-view]"); if (!b) return;
+  location.hash = b.dataset.view;
+  show(b.dataset.view);
+});
+addEventListener("hashchange", () => show(location.hash.slice(1)));
+
+addEventListener("keydown", e => {
+  if ($("#view-feed").hidden || e.target.closest("input, textarea")) return;
+  if (["ArrowDown", "j", "PageDown"].includes(e.key) || ["ArrowUp", "k", "PageUp"].includes(e.key)) {
+    e.preventDefault();
+    const dir = ["ArrowDown", "j", "PageDown"].includes(e.key) ? 1 : -1;
+    feed.scrollBy({ top: dir * feed.clientHeight, behavior: "smooth" });
+  }
+});
+
+/* ---------- boot ---------- */
+const savedFilter = store.get("wf.filter", "all");
+filter = savedFilter === "all" || CATS[savedFilter] ? savedFilter : "all";
+renderFilters();
+renderSavedCount();
+renderToday();
+resetFeed();
+show(location.hash.slice(1));
+</script>
