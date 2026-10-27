@@ -22,8 +22,9 @@ Practice features:
 
 There are also **Saved** (bookmarked cards) and **Books** (a reading path with checkboxes) tabs.
 
-Storage: reading progress, the review schedule, saved cards and ticked books live in the browser's `localStorage`
-(one device). Flags go to the artifact's shared `db` collection `flags` (one doc per card:
+Storage: on claude.ai, each person's progress (seen cards, review schedule, saved cards, ticked books) is kept in
+their private artifact-db doc `data/users/<id>/progress`, so it syncs across devices and Claude can read it as the
+owner. `localStorage` serves as a fast local cache and as the only store when the page runs elsewhere. Flags go to the artifact's shared `db` collection `flags` (one doc per card:
 `{cardId, q, status, notes[]}`), so Claude can read them and fix the cards. When the page runs outside
 claude.ai, flags fall back to `localStorage`.
 

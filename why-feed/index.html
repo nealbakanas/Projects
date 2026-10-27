@@ -876,10 +876,17 @@ const STAGES = [
 ];
 
 /* ---------- storage (per-device, optional) ---------- */
+const SYNC_KEYS = new Set(["wf.saved", "wf.seen", "wf.books", "wf.sr", "wf.today", "wf.guess"]);
+let progressRef = null, writeTimer = null, writing = false, writeAgain = false;
 const store = {
   get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  raw(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  set(k, v) {
+    store.raw(k, v);
+    if (SYNC_KEYS.has(k)) { lastWrite = Date.now(); store.raw("wf.updatedAt", lastWrite); scheduleSync(); }
+  }
 };
+let lastWrite = store.get("wf.updatedAt", 0);
 const todayKey = new Date().toISOString().slice(0, 10);
 let saved = new Set(store.get("wf.saved", []));
 let seen = new Set(store.get("wf.seen", []));
@@ -919,14 +926,73 @@ const REASONS = ["Seems wrong", "Unclear", "Too long", "Kid answer doesn't land"
 let db = null;
 let flags = {};
 let localFlags = store.get("wf.flagsLocal", {});
+/* ---------- sync: each person's progress lives in their private db doc, so it follows them across devices and Claude can read it ---------- */
+function progressState() {
+  return { saved: [...saved], seen: [...seen], books: [...booksRead], sr, today, guess: guessFirst, updatedAt: lastWrite };
+}
+function scheduleSync() {
+  if (!progressRef) return;
+  clearTimeout(writeTimer);
+  writeTimer = setTimeout(flushSync, 1500);
+}
+async function flushSync() {
+  if (!progressRef) return;
+  if (writing) { writeAgain = true; return; }
+  writing = true;
+  try { await progressRef.set(progressState()); } catch (e) {}
+  writing = false;
+  if (writeAgain) { writeAgain = false; flushSync(); }
+}
+addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && writeTimer) { clearTimeout(writeTimer); writeTimer = null; flushSync(); } });
+
+function applyRemote(r) {
+  const remoteNewer = (r.updatedAt || 0) > lastWrite;
+  (r.seen || []).forEach(id => seen.add(id));
+  for (const [id, e] of Object.entries(r.sr || {})) if (!sr[id] || e.due > sr[id].due) sr[id] = e;
+  if (r.today && r.today.date === todayKey) today.ids = [...new Set([...today.ids, ...r.today.ids])];
+  const guessBefore = guessFirst;
+  if (remoteNewer) {
+    saved = new Set(r.saved || []);
+    booksRead = new Set(r.books || []);
+    guessFirst = !!r.guess;
+    lastWrite = r.updatedAt;
+    store.raw("wf.updatedAt", lastWrite);
+  }
+  store.raw("wf.seen", [...seen]); store.raw("wf.sr", sr); store.raw("wf.today", today);
+  store.raw("wf.saved", [...saved]); store.raw("wf.books", [...booksRead]); store.raw("wf.guess", guessFirst);
+  renderToday(); renderSavedCount(); renderFilters();
+  document.querySelectorAll("[data-save]").forEach(b => {
+    const on = saved.has(b.dataset.save);
+    b.setAttribute("aria-pressed", on);
+    const label = b.querySelector("span"); if (label) label.textContent = on ? "Saved" : "Save";
+  });
+  if (!$("#view-saved").hidden) renderSaved();
+  if (!$("#view-books").hidden) renderBooks();
+  if (guessBefore !== guessFirst) resetFeed();
+  return remoteNewer;
+}
+
 (async () => {
   if (!window.claude || !window.claude.use) return;
-  try { db = await window.claude.use("db"); } catch (e) { db = null; }
+  let user = null;
+  try { [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]); } catch (e) { db = null; }
   if (!db) return;
   db.collection("flags").onSnapshot(snap => {
     flags = {};
     snap.docs.forEach(d => { flags[d.id] = d.data(); });
     refreshFlagButtons();
+  }, () => {});
+  const uid = user ? await user.id() : null;
+  if (!uid) return;
+  const ref = db.doc("data/users/" + uid + "/progress");
+  try {
+    const snap = await ref.get();
+    progressRef = ref;
+    if (snap.exists) applyRemote(snap.data());
+    scheduleSync();
+  } catch (e) { return; }
+  ref.onSnapshot(snap => {
+    if (snap.exists && !snap.metadata.hasPendingWrites && (snap.data().updatedAt || 0) > lastWrite) applyRemote(snap.data());
   }, () => {});
 })();
 function isFlagged(id) {
