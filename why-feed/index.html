@@ -67,8 +67,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
   padding-block: 12px 8px; flex-wrap: wrap;
   max-width: 680px; width: 100%; margin-inline: auto;
 }
-.brand { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.brand { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 10px; min-width: 0; }
 .brand h1 {
+  white-space: nowrap;
   font-family: var(--f-display); font-weight: 800; font-size: 1.35rem; letter-spacing: -0.02em;
   margin: 0; line-height: 1;
 }
@@ -211,6 +212,62 @@ button { font: inherit; color: inherit; cursor: pointer; }
   background: var(--accent); color: var(--accent-ink); border-radius: 4px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px;
 }
 .book.done .title { text-decoration: line-through; text-decoration-color: var(--muted); }
+
+/* Filters: practice toggles */
+.filters .sep { flex: none; width: 1px; background: var(--line); margin-block: 4px; }
+.filters button.practice[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.filters .due-n { font-family: var(--f-mono); font-size: 0.72rem; }
+
+/* Guess-first veil */
+.ladder.veiled .rung p { filter: blur(7px); user-select: none; }
+.ladder.veiled .rung { pointer-events: none; }
+.unveil {
+  align-self: flex-start; border: 1.5px dashed var(--cat); background: var(--surface); color: var(--ink);
+  border-radius: 12px; padding: 9px 14px; font-weight: 700; font-size: 0.9rem;
+}
+
+/* Sources + flag row */
+.meta-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font-size: 0.85rem; color: var(--muted); }
+.meta-row .label { font-family: var(--f-mono); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.meta-row a { color: var(--cat); font-weight: 700; text-underline-offset: 3px; }
+.flag-btn {
+  margin-left: auto; border: 1px solid var(--line); background: transparent; border-radius: 999px;
+  padding: 3px 10px; font-size: 0.78rem; color: var(--muted);
+}
+.flag-btn[aria-pressed="true"] { color: var(--c-chem); border-color: var(--c-chem); font-weight: 700; }
+.flag-form {
+  display: grid; gap: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px;
+}
+.flag-form .why { font-weight: 700; font-size: 0.9rem; }
+.reasons { display: flex; flex-wrap: wrap; gap: 6px; }
+.reasons button {
+  border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 3px 10px; font-size: 0.8rem; color: var(--muted);
+}
+.reasons button[aria-pressed="true"] { border-color: var(--ink); color: var(--ink); font-weight: 700; }
+.flag-form textarea {
+  font: inherit; font-size: 0.9rem; color: var(--ink); background: var(--bg); border: 1px solid var(--line);
+  border-radius: 10px; padding: 8px 10px; min-height: 64px; resize: vertical; width: 100%;
+}
+.flag-form .actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.btn {
+  border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 5px 14px; font-size: 0.85rem; font-weight: 700;
+}
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.flag-form .status { font-size: 0.82rem; color: var(--muted); }
+
+/* Recall cards */
+.recall .card-inner { background: var(--surface); border-style: dashed; border-width: 1.5px; border-color: var(--cat); }
+.recall .level { font-family: var(--f-mono); font-size: 0.68rem; color: var(--muted); letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
+.recall .prompt { margin: 0; color: var(--muted); max-width: 52ch; }
+.recall .reveal { align-self: flex-start; }
+.grade { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: auto; }
+.grade button {
+  border: 1.5px solid var(--line); background: var(--surface); border-radius: 14px; padding: 10px 12px; text-align: left;
+}
+.grade button b { display: block; }
+.grade button small { color: var(--muted); font-size: 0.78rem; }
+.grade [data-grade="good"] { border-color: var(--cat); }
+.graded { margin: 0; margin-top: auto; font-weight: 700; color: var(--cat); }
 
 @media (prefers-reduced-motion: reduce) {
   .hint { animation: none; }
@@ -753,6 +810,29 @@ const CARDS = [
     next: "infinity" }
 ];
 
+// Wikipedia topic for each card's "Go deeper" links.
+const WIKI = {
+  microwave: "Microwave oven", light: "Light", bulb: "Incandescent light bulb", glow: "Thermal radiation",
+  starcolor: "Stellar classification", sky: "Rayleigh scattering", sunset: "Sunset", rainbow: "Rainbow",
+  straw: "Refraction", glasses: "Corrective lens", wind: "Wind", hotair: "Buoyancy", rain: "Rain", clouds: "Cloud",
+  snow: "Snowflake", ice: "Ice", "salt-ice": "Freezing-point depression", seasalt: "Seawater", oceanblue: "Color of water",
+  waves: "Wind wave", tides: "Tide", moonphase: "Lunar phase", moonfollow: "Parallax", seasons: "Season",
+  daynight: "Earth's rotation", spin: "Foucault pendulum", gravity: "Gravity", round: "Hydrostatic equilibrium",
+  twinkle: "Twinkling", sun: "Sun", darksky: "Olbers' paradox", magnet: "Magnet", electricity: "Electric current",
+  battery: "Electric battery", fridge: "Refrigerator", sweat: "Perspiration", thunder: "Lightning", sound: "Sound",
+  phone: "Mobile phone", touchscreen: "Touchscreen", plane: "Lift (force)", engine: "Four-stroke engine",
+  toilet: "Flush toilet", mirror: "Mirror", fire: "Fire", rust: "Rust", soap: "Soap", atoms: "Atom",
+  states: "State of matter", popcorn: "Popcorn", bread: "Leavening agent", apple: "Food browning",
+  onion: "Syn-Propanethial-S-oxide", leaves: "Autumn leaf color", photosynthesis: "Photosynthesis",
+  firefly: "Bioluminescence", flamingo: "Flamingo", dognose: "Olfaction", color: "Color vision", sleep: "Sleep",
+  yawn: "Yawn", hiccup: "Hiccup", breathe: "Breathing", blood: "Hemoglobin", eat: "Metabolism",
+  goosebumps: "Goose bumps", haircut: "Keratin", bellybutton: "Navel", vaccine: "Vaccine", quake: "Plate tectonics",
+  divzero: "Division by zero", infinity: "Infinity", million: "Orders of magnitude (numbers)", pi: "Pi",
+  hexagon: "Honeycomb conjecture", degrees: "Degree (angle)", birthday: "Birthday problem", recurring: "0.999..."
+};
+// "go=Go" opens the article on an exact title match and falls back to search results, so links never dead-end.
+const wikiUrl = (host, topic) => `https://${host}.wikipedia.org/w/index.php?title=Special:Search&go=Go&search=${encodeURIComponent(topic)}`;
+
 const STAGES = [
   { name: "1 · Start with everyday things", blurb: "These answer the microwave and light-bulb questions directly. Read them in this order.", books: [
     { id: "thing-explainer", t: "Thing Explainer", a: "Randall Munroe", why: "Explains machines using only the 1,000 most common words. It's a masterclass in talking to kids.", start: true },
@@ -806,6 +886,7 @@ let seen = new Set(store.get("wf.seen", []));
 let booksRead = new Set(store.get("wf.books", []));
 let today = store.get("wf.today", { date: todayKey, ids: [] });
 if (today.date !== todayKey) today = { date: todayKey, ids: [] };
+let guessFirst = store.get("wf.guess", false);
 
 const byId = Object.fromEntries(CARDS.map(c => [c.id, c]));
 const $ = s => document.querySelector(s);
@@ -813,7 +894,65 @@ const $ = s => document.querySelector(s);
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 const paras = arr => arr.map(p => `<p>${p}</p>`).join("");
 
+/* ---------- spaced repetition ---------- */
+// Leitner boxes: each correct recall moves a card up a box and pushes its next review further out.
+const DAY = 86400000;
+const INTERVALS = [1, 3, 7, 16, 35, 90];
+let sr = store.get("wf.sr", {});
+for (const id of seen) if (!sr[id] && byId[id]) sr[id] = { box: 0, due: Date.now() };
+store.set("wf.sr", sr);
+const recallShown = new Set();
+
+function scheduleNew(id) {
+  if (sr[id]) return;
+  sr[id] = { box: 0, due: Date.now() + DAY };
+  store.set("wf.sr", sr);
+}
+function dueIds() {
+  const now = Date.now();
+  return Object.keys(sr).filter(id => byId[id] && sr[id].due <= now).sort((a, b) => sr[a].due - sr[b].due);
+}
+const daysLabel = n => n === 1 ? "tomorrow" : `in ${n} days`;
+
+/* ---------- flags (shared db so Claude can read them) ---------- */
+const REASONS = ["Seems wrong", "Unclear", "Too long", "Kid answer doesn't land", "Needs a source"];
+let db = null;
+let flags = {};
+let localFlags = store.get("wf.flagsLocal", {});
+(async () => {
+  if (!window.claude || !window.claude.use) return;
+  try { db = await window.claude.use("db"); } catch (e) { db = null; }
+  if (!db) return;
+  db.collection("flags").onSnapshot(snap => {
+    flags = {};
+    snap.docs.forEach(d => { flags[d.id] = d.data(); });
+    refreshFlagButtons();
+  }, () => {});
+})();
+function isFlagged(id) {
+  return (flags[id] && flags[id].status === "open") || !!localFlags[id];
+}
+function refreshFlagButtons() {
+  document.querySelectorAll("[data-flag]").forEach(b => {
+    const on = isFlagged(b.dataset.flag);
+    b.setAttribute("aria-pressed", on);
+    b.textContent = on ? "Flagged" : "Flag a problem";
+  });
+}
+
 const BOOKMARK = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4.5L6 21z" stroke-linejoin="round"/></svg>`;
+
+function sourcesHTML(c) {
+  const topic = WIKI[c.id];
+  const flagged = isFlagged(c.id);
+  return `<div class="meta-row">
+      ${topic ? `<span class="label">Go deeper</span>
+      <a href="${wikiUrl("en", topic)}" target="_blank" rel="noopener">Wikipedia ↗</a>
+      <a href="${wikiUrl("simple", topic)}" target="_blank" rel="noopener">Simple English ↗</a>` : ""}
+      <button class="flag-btn" data-flag="${c.id}" aria-pressed="${flagged}">${flagged ? "Flagged" : "Flag a problem"}</button>
+    </div>
+    <div class="flag-slot"></div>`;
+}
 
 function cardHTML(c, first) {
   const nx = c.next && byId[c.next];
@@ -825,15 +964,41 @@ function cardHTML(c, first) {
         <button class="save" data-save="${c.id}" aria-pressed="${on}">${BOOKMARK}<span>${on ? "Saved" : "Save"}</span></button>
       </div>
       <h2 class="q">${c.q}</h2>
-      <ol class="ladder">
+      ${guessFirst ? `<button class="unveil" data-unveil>Guess out loud first, then tap to reveal</button>` : ""}
+      <ol class="ladder${guessFirst ? " veiled" : ""}">
         <li class="rung"><span class="rung-label">Rung 1 · Say it to a 4-year-old</span><p class="kid">${c.kid}</p></li>
         <li class="rung"><span class="rung-label">Rung 2 · How it really works</span>${paras(c.how)}</li>
         ${c.try ? `<li class="rung"><span class="rung-label">Rung 3 · Try it together</span><p>${c.try}</p></li>` : ""}
       </ol>
       ${c.fact ? `<p class="fact"><b>Dinner-table fact.</b> ${c.fact}</p>` : ""}
+      ${sourcesHTML(c)}
       ${nx ? `<button class="next" data-next="${nx.id}"><div><small>But why…?</small><span>${nx.q}</span></div><span class="arrow" aria-hidden="true">↓</span></button>` : ""}
     </div>
     ${first ? `<div class="hint" aria-hidden="true">Scroll for the next why</div>` : ""}
+  </article>`;
+}
+
+function recallHTML(c) {
+  const s = sr[c.id] || { box: 0 };
+  const good = INTERVALS[Math.min(s.box + 1, INTERVALS.length - 1)];
+  return `<article class="card recall" data-recall="${c.id}" style="--cat:var(--c-${c.cat})">
+    <div class="card-inner">
+      <div class="card-top">
+        <span class="chip"><i></i>Quick recall · ${CATS[c.cat]}</span>
+        <span class="level">Level ${s.box + 1} of ${INTERVALS.length}</span>
+      </div>
+      <h2 class="q">${c.q}</h2>
+      <p class="prompt">Your kid just asked this. Say the 4-year-old answer out loud. Then explain the real mechanism in your head, as if they asked "but why?"</p>
+      <button class="unveil reveal" data-reveal>Reveal the answer</button>
+      <ol class="ladder" hidden>
+        <li class="rung"><span class="rung-label">Rung 1 · Say it to a 4-year-old</span><p class="kid">${c.kid}</p></li>
+        <li class="rung"><span class="rung-label">Rung 2 · How it really works</span>${paras(c.how)}</li>
+      </ol>
+      <div class="grade" hidden>
+        <button data-grade="again"><b>Fuzzy</b><small>See it again tomorrow</small></button>
+        <button data-grade="good"><b>Nailed it</b><small>Next review ${daysLabel(good)}</small></button>
+      </div>
+    </div>
   </article>`;
 }
 
@@ -842,9 +1007,16 @@ const feed = $("#feed");
 let filter = "all";
 let queue = [];
 let round = 0;
+let sinceRecall = 0;
 
-function pool() { return CARDS.filter(c => filter === "all" || c.cat === filter); }
+function pool() { return CARDS.filter(c => filter === "all" || filter === "review" || c.cat === filter); }
 function refill() {
+  if (filter === "review") {
+    if (round === 0) queue.push(...dueIds().map(id => ({ recall: id })));
+    queue.push({ caughtUp: true });
+    round++;
+    return;
+  }
   const p = pool();
   const fresh = shuffle(p.filter(c => !seen.has(c.id)));
   const old = shuffle(p.filter(c => seen.has(c.id)));
@@ -852,18 +1024,40 @@ function refill() {
   queue.push(...fresh, ...old);
   round++;
 }
+function nextRecall() {
+  return dueIds().find(id => !recallShown.has(id) && (filter === "all" || byId[id].cat === filter));
+}
+let feedDone = false;
 function appendBatch(n = 8) {
+  if (feedDone) return;
   let html = "";
   for (let i = 0; i < n; i++) {
+    if (filter !== "review" && sinceRecall >= 4) {
+      const r = nextRecall();
+      if (r) { recallShown.add(r); sinceRecall = 0; html += recallHTML(byId[r]); continue; }
+    }
     if (!queue.length) refill();
     const item = queue.shift();
-    if (item.interstitial) {
+    if (item.caughtUp) {
+      html += `<article class="card interstitial" style="--cat:var(--accent)"><div class="card-inner">
+        <span class="chip"><i></i>All caught up</span>
+        <h2>Nothing else is due for review.</h2>
+        <p>Cards come back here on a schedule: tomorrow, then 3 days, 7, 16, 35 and 90, each time you nail one. Head back to the feed for new questions.</p>
+        <button class="btn primary" data-filter-go="all">Back to the feed</button>
+      </div></article>`;
+      feedDone = true;
+      break;
+    } else if (item.recall) {
+      recallShown.add(item.recall);
+      html += recallHTML(byId[item.recall]);
+    } else if (item.interstitial) {
       html += `<article class="card interstitial" style="--cat:var(--accent)"><div class="card-inner">
         <span class="chip"><i></i>Round complete</span>
         <h2>You've climbed all ${item.n} ladders${filter === "all" ? "" : " in " + CATS[filter]}.</h2>
         <p>The feed starts over in a new order. Seeing a card again is how it sticks, so try saying rung 1 out loud before you read it.</p>
       </div></article>`;
     } else {
+      sinceRecall++;
       html += cardHTML(item, feed.children.length === 0 && html === "");
     }
   }
@@ -871,7 +1065,8 @@ function appendBatch(n = 8) {
   observeCards();
 }
 function resetFeed() {
-  feed.innerHTML = ""; queue = []; round = 0;
+  feed.innerHTML = ""; queue = []; round = 0; sinceRecall = 0; feedDone = false;
+  recallShown.clear();
   feed.scrollTop = 0;
   appendBatch();
 }
@@ -882,6 +1077,7 @@ const seenObs = new IntersectionObserver(entries => {
     const id = e.target.dataset.id;
     if (id) {
       seen.add(id); store.set("wf.seen", [...seen]);
+      scheduleNew(id);
       if (!today.ids.includes(id)) { today.ids.push(id); store.set("wf.today", today); renderToday(); }
     }
     if (e.target === feed.lastElementChild || e.target === feed.children[feed.children.length - 3]) appendBatch();
@@ -890,12 +1086,91 @@ const seenObs = new IntersectionObserver(entries => {
 function observeCards() { for (const el of feed.children) if (!el.dataset.obs) { el.dataset.obs = 1; seenObs.observe(el); } }
 
 function renderToday() {
-  $("#today").textContent = `${today.ids.length} today · ${seen.size}/${CARDS.length} explored`;
+  const due = dueIds().length;
+  $("#today").textContent = `${today.ids.length} today · ${seen.size}/${CARDS.length} explored${due ? ` · ${due} due` : ""}`;
 }
+
+function openFlagForm(card, id) {
+  const slot = card.querySelector(".flag-slot");
+  if (slot.firstChild) { slot.innerHTML = ""; return; }
+  const prior = (flags[id] && flags[id].status === "open") || localFlags[id];
+  slot.innerHTML = `<form class="flag-form" data-flag-form="${id}">
+    <span class="why">${prior ? "Already flagged. Add another note?" : "What's off about this card?"}</span>
+    <div class="reasons">${REASONS.map(r => `<button type="button" data-reason="${r}" aria-pressed="false">${r}</button>`).join("")}</div>
+    <textarea id="flag-note-${id}" placeholder="Optional: what's wrong, or what you'd say instead"></textarea>
+    <div class="actions"><button class="btn primary" type="submit">Send flag</button><button class="btn" type="button" data-flag-cancel>Cancel</button><span class="status" role="status"></span></div>
+  </form>`;
+}
+
+async function submitFlag(form) {
+  const id = form.dataset.flagForm;
+  const reasons = [...form.querySelectorAll('[data-reason][aria-pressed="true"]')].map(b => b.dataset.reason);
+  const text = form.querySelector("textarea").value.trim();
+  const status = form.querySelector(".status");
+  if (!reasons.length && !text) { status.textContent = "Pick a reason or write a note first."; return; }
+  const note = { reasons, text, at: new Date().toISOString() };
+  const btn = form.querySelector('[type="submit"]');
+  btn.disabled = true;
+  if (db) {
+    const prev = flags[id] && flags[id].status === "open" ? (flags[id].notes || []) : [];
+    try {
+      await db.doc("flags/" + id).set({ cardId: id, q: byId[id].q, status: "open", notes: [...prev, note], updatedAt: note.at });
+      flags[id] = { status: "open", notes: [...prev, note] };
+      status.textContent = "Sent. Ask Claude to review your flags and it can fix the card.";
+    } catch (e) {
+      btn.disabled = false;
+      status.textContent = e && e.code === "quota_exceeded" ? "The flag list is full. Ask Claude to clear resolved flags." : "Couldn't send the flag. Check your connection and try again.";
+      return;
+    }
+  } else {
+    localFlags[id] = [...(localFlags[id] || []), note];
+    store.set("wf.flagsLocal", localFlags);
+    status.textContent = "Saved on this device only. Open the app on claude.ai to send flags to Claude.";
+  }
+  refreshFlagButtons();
+  setTimeout(() => { const slot = form.parentElement; if (slot) slot.innerHTML = ""; }, 2200);
+}
+
+feed.addEventListener("submit", e => {
+  const form = e.target.closest("[data-flag-form]");
+  if (form) { e.preventDefault(); submitFlag(form); }
+});
 
 feed.addEventListener("click", e => {
   const s = e.target.closest("[data-save]");
   if (s) { toggleSave(s.dataset.save); return; }
+  const fl = e.target.closest("[data-flag]");
+  if (fl) { openFlagForm(fl.closest(".card"), fl.dataset.flag); return; }
+  const rs = e.target.closest("[data-reason]");
+  if (rs) { rs.setAttribute("aria-pressed", rs.getAttribute("aria-pressed") !== "true"); return; }
+  const fc = e.target.closest("[data-flag-cancel]");
+  if (fc) { fc.closest(".flag-slot").innerHTML = ""; return; }
+  const uv = e.target.closest("[data-unveil]");
+  if (uv) { uv.closest(".card").querySelector(".ladder").classList.remove("veiled"); uv.remove(); return; }
+  const rv = e.target.closest("[data-reveal]");
+  if (rv) {
+    const card = rv.closest(".card");
+    card.querySelector(".ladder").hidden = false;
+    card.querySelector(".grade").hidden = false;
+    rv.remove();
+    return;
+  }
+  const gr = e.target.closest("[data-grade]");
+  if (gr) {
+    const card = gr.closest(".card");
+    const id = card.dataset.recall;
+    const s = sr[id] || { box: 0 };
+    let days;
+    if (gr.dataset.grade === "good") { s.box = Math.min(s.box + 1, INTERVALS.length - 1); days = INTERVALS[s.box]; }
+    else { s.box = 0; days = 1; }
+    s.due = Date.now() + days * DAY;
+    sr[id] = s; store.set("wf.sr", sr);
+    card.querySelector(".grade").outerHTML = `<p class="graded">${gr.dataset.grade === "good" ? "Nice." : "No problem, it'll be back."} Next review ${daysLabel(days)}.</p>`;
+    renderToday(); renderFilters();
+    return;
+  }
+  const go = e.target.closest("[data-filter-go]");
+  if (go) { setFilter(go.dataset.filterGo); return; }
   const n = e.target.closest("[data-next]");
   if (n) {
     const card = n.closest(".card");
@@ -925,15 +1200,29 @@ function toggleSave(id) {
 
 /* ---------- filters ---------- */
 function renderFilters() {
+  const due = dueIds().length;
   const opts = [["all", "Everything"], ...Object.entries(CATS)];
-  $("#filters").innerHTML = opts.map(([k, label]) =>
-    `<button data-filter="${k}" aria-pressed="${filter === k}" ${k === "all" ? "" : `style="--cat:var(--c-${k})"`}>${k === "all" ? "" : "<i></i>"}${label}</button>`
-  ).join("");
+  $("#filters").innerHTML =
+    `<button class="practice" data-filter="review" aria-pressed="${filter === "review"}">Review<span class="due-n">${due ? " · " + due : ""}</span></button>
+     <button class="practice" data-guess aria-pressed="${guessFirst}">Guess first</button>
+     <span class="sep" aria-hidden="true"></span>` +
+    opts.map(([k, label]) =>
+      `<button data-filter="${k}" aria-pressed="${filter === k}" ${k === "all" ? "" : `style="--cat:var(--c-${k})"`}>${k === "all" ? "" : "<i></i>"}${label}</button>`
+    ).join("");
+}
+function setFilter(f) {
+  filter = f;
+  if (f !== "review") store.set("wf.filter", f);
+  renderFilters(); resetFeed();
 }
 $("#filters").addEventListener("click", e => {
+  if (e.target.closest("[data-guess]")) {
+    guessFirst = !guessFirst; store.set("wf.guess", guessFirst);
+    renderFilters(); resetFeed();
+    return;
+  }
   const b = e.target.closest("[data-filter]"); if (!b) return;
-  filter = b.dataset.filter; store.set("wf.filter", filter);
-  renderFilters(); resetFeed();
+  setFilter(b.dataset.filter);
 });
 
 /* ---------- saved ---------- */
